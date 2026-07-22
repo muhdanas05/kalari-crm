@@ -1,0 +1,18 @@
+node_modules
+.next
+out
+build
+dist
+# Secrets. `.env*.local` alone does NOT match a plain `.env` — that gap left the
+# service_role key, the Supabase account token and PII_ENCRYPTION_KEY stageable.
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+next-env.d.ts
+.vercel
+screenshots/
+tsconfig.tsbuildinfo
+.next-verify
+.admin-credentials.txt

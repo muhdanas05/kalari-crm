@@ -1,0 +1,341 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ══════════════════════════════════════════════════════════════════════
+   Design tokens.
+
+   These mirror tailwind.config.ts for the handful of raw-CSS classes below
+   that can't reach a Tailwind class. Keep the two in step.
+
+   Kalari Tours and Travels — navy + gold, sampled from kalaritravels.in/logo.svg (#0F365D / #C7890A).
+
+   Navy is the INTERACTIVE accent because it carries white text at ~13:1. Gold
+   is the BRAND accent: it fails contrast under white type, so it is used for
+   the mark, rules and eyebrows, never for a button label.
+   ══════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Surfaces — faintly warm, so gold doesn't go grey */
+  --paper: #faf9f6;
+  --paper-deep: #f0eee8;
+  --surface: #ffffff;
+  --surface-alt: #f7f6f2;
+
+  /* Hairlines */
+  --line: #e5e3dc;
+  --line-strong: #cdcbc2;
+
+  /* Ink — near-black with a navy cast */
+  --ink: #0a1428;
+  --ink-soft: #232c42;
+  --ink-mid: #626b80;
+  --ink-faint: #949bab;
+  --ink-ghost: #c3c8d4;
+
+  /* Accent — navy (interactive) */
+  --accent: #0f365d;
+  --accent-deep: #031d3c;
+  --accent-soft: #4c74a6;
+  --accent-pale: #d9e3ef;
+  --accent-mist: #eff4f9;
+
+  /* Gold — brand highlight. --gold-deep is the text-safe one. */
+  --gold: #c7890a;
+  --gold-deep: #8f6207;
+  --gold-soft: #e0a83c;
+  --gold-pale: #f8ecd2;
+  --gold-mist: #fdf8ee;
+
+  /* Semantic — these carry meaning. Never reuse them decoratively.
+     `warn` is orange, deliberately away from the gold brand accent. */
+  --ok: #1f7a4c;
+  --warn: #c2610a;
+  --alert: #c62828;
+  --info: #2b5fa8;
+
+  --shadow-floating:
+    0 1px 2px rgba(20, 20, 30, 0.04), 0 4px 12px rgba(20, 20, 30, 0.06);
+
+  /* Manrope (display + body) + JetBrains Mono (data), loaded in layout.tsx. */
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-manrope);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular figures for mono data — money columns must align. */
+.font-mono {
+  font-feature-settings: "tnum", "zero";
+}
+
+::selection {
+  background-color: var(--accent-mist);
+  color: var(--accent-deep);
+}
+
+* {
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Overlay motion — modals, drawers, popovers.
+   ────────────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes overlayScaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes overlayBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlaySlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes overlaySlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-modal-in {
+  animation: overlayScaleIn 200ms ease-out both;
+}
+.animate-backdrop-in {
+  animation: overlayBackdropIn 180ms ease-out both;
+}
+.animate-drawer-in {
+  animation: overlaySlideInRight 220ms ease-out both;
+}
+.animate-sheet-in {
+  animation: overlaySlideUp 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Signature surfaces — gradient CTA with a shine sweep, plus
+   the soft elevation primitives used by Button / Card / StatCard.
+   ────────────────────────────────────────────────────────── */
+.cta-accent-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  box-shadow:
+    0 4px 14px rgba(15, 54, 93, 0.26),
+    0 1px 3px rgba(15, 54, 93, 0.20);
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.cta-accent-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 1s ease-out;
+  pointer-events: none;
+}
+.cta-accent-gradient:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 6px 20px rgba(15, 54, 93, 0.32),
+    0 2px 4px rgba(15, 54, 93, 0.22);
+}
+.cta-accent-gradient:hover::before {
+  transform: translateX(120%);
+}
+.cta-accent-gradient:active {
+  transform: translateY(0.5px);
+  transition-duration: 80ms;
+}
+
+.soft-elev {
+  box-shadow:
+    0 1px 2px rgba(20, 20, 30, 0.04),
+    0 4px 12px rgba(20, 20, 30, 0.05);
+}
+.soft-elev-hover {
+  transition:
+    box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.soft-elev-hover:hover {
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 4px 8px rgba(20, 20, 30, 0.04),
+    0 12px 24px -8px rgba(15, 54, 93, 0.16);
+}
+.soft-elev-hover:active {
+  transform: translateY(0.5px);
+  box-shadow: 0 1px 2px rgba(20, 20, 30, 0.04);
+  transition-duration: 80ms;
+}
+
+/* Card vocabulary — border-led: a visible hairline plus one soft shadow. */
+.card-white {
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 1px 2px rgba(20, 20, 30, 0.04),
+    0 4px 12px rgba(20, 20, 30, 0.06);
+  transition:
+    box-shadow 220ms ease-out,
+    transform 220ms ease-out;
+}
+.card-white-hover:hover {
+  box-shadow:
+    0 2px 4px rgba(20, 20, 30, 0.06),
+    0 12px 24px rgba(20, 20, 30, 0.08);
+  transform: translateY(-1px);
+}
+.bulk-bar-shadow {
+  box-shadow:
+    0 -4px 12px rgba(20, 20, 30, 0.08),
+    0 -1px 2px rgba(20, 20, 30, 0.04);
+}
+.metric-active-ring {
+  box-shadow:
+    0 0 0 1px rgba(15, 54, 93, 0.18),
+    0 8px 24px rgba(15, 54, 93, 0.08);
+}
+.gold-rule {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 18%,
+    var(--gold) 82%,
+    transparent 100%
+  );
+}
+
+.row-hover-paper {
+  transition:
+    background-color 200ms ease-out,
+    border-radius 200ms ease-out;
+}
+.row-hover-paper:hover {
+  background-color: var(--paper);
+  border-radius: 12px;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+.empty-pulse {
+  animation: pulse-soft 3s ease-in-out infinite;
+}
+
+/* Every animation has a reduced-motion escape. */
+@media (prefers-reduced-motion: reduce) {
+  .cta-accent-gradient,
+  .cta-accent-gradient::before,
+  .soft-elev-hover,
+  .animate-modal-in,
+  .animate-backdrop-in,
+  .animate-drawer-in,
+  .animate-sheet-in,
+  .empty-pulse {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+  .cta-accent-gradient:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* iOS Safari auto-zooms whenever a focused control has font-size < 16px.
+   Enforce a 16px floor on touch widths only, so the desktop type scale stays as
+   designed. checkbox/radio/range are excluded — no text, never zoom. The
+   viewport sets no maximum-scale, so pinch-to-zoom stays available. */
+@media (max-width: 639.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Lucide glyphs 20% darker for optical weight against Manrope. */
+svg.lucide {
+  filter: brightness(0.8);
+}
+/* …but icons on an accent / dark fill are meant to be pure white; 0.8 would
+   render them muddy grey. Opt those contexts back to full brightness. */
+.bg-accent svg.lucide,
+.bg-accent-deep svg.lucide,
+.bg-alert svg.lucide,
+.bg-ok svg.lucide,
+.bg-ink svg.lucide,
+.cta-accent-gradient svg.lucide {
+  filter: none;
+}

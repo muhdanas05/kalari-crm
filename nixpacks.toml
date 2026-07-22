@@ -1,0 +1,21 @@
+# Railway builds with Nixpacks.
+#
+# Node 22, not 20: @supabase/supabase-js@2.110.x declares `engines.node >= 22`,
+# and local dev is v22.17.0. A 20 pin produced a wall of EBADENGINE warnings on
+# every Railway build — warnings today, a real break the first time Supabase uses
+# something 22-only.
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+# `npm ci` installs devDependencies too, and it must: the Next build needs
+# typescript, tailwind and @types to compile. So devDependencies have to stay
+# installable in a container with no browser and no `tar`/`unzip` — which is why
+# puppeteer is no longer one of them.
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
