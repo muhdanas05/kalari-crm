@@ -62,10 +62,7 @@ export function AppShell({
               />
             </header>
             <main className="flex-1">
-              <div
-                key={pathname}
-                className="animate-page-in mx-auto w-full max-w-[1280px] px-2 pt-2"
-              >
+              <div className="animate-page-in mx-auto w-full max-w-[1280px] px-2 pt-2">
                 {children}
               </div>
             </main>
@@ -146,7 +143,6 @@ function DesktopShell({
 
         <main className="flex-1">
           <div
-            key={pathname}
             className={cn(
               "animate-page-in",
               wide

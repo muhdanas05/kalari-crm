@@ -8,12 +8,8 @@ import { Plus, Pencil } from "@/components/icons";
 import { saveSupplier, type SupplierInput } from "./actions";
 import type { Supplier } from "@/lib/db/suppliers";
 
-/** Same modal, two modes: no `supplier` prop = "New supplier"; with it = "Edit". */
-export function SupplierFormModal({ supplier }: { supplier?: Supplier }) {
-  const toast = useToast();
-  const [open, setOpen] = useState(false);
-  const [pending, start] = useTransition();
-  const [form, setForm] = useState<SupplierInput>(() => ({
+function blankForm(supplier?: Supplier): SupplierInput {
+  return {
     id: supplier?.id,
     name: supplier?.name ?? "",
     supplies: supplier?.supplies ?? "",
@@ -24,8 +20,24 @@ export function SupplierFormModal({ supplier }: { supplier?: Supplier }) {
     city: supplier?.city ?? "",
     address: supplier?.address ?? "",
     notes: supplier?.notes ?? "",
-  }));
+  };
+}
+
+/** Same modal, two modes: no `supplier` prop = "New supplier"; with it = "Edit". */
+export function SupplierFormModal({ supplier }: { supplier?: Supplier }) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
+  const [form, setForm] = useState<SupplierInput>(() => blankForm(supplier));
   const [error, setError] = useState<string | null>(null);
+
+  // Reset every time the dialog opens — otherwise a cancelled "New supplier"
+  // attempt leaves its half-typed text sitting there for the next open.
+  const openForm = () => {
+    setForm(blankForm(supplier));
+    setError(null);
+    setOpen(true);
+  };
 
   const submit = () => {
     if (!form.name.trim()) {
@@ -50,7 +62,7 @@ export function SupplierFormModal({ supplier }: { supplier?: Supplier }) {
         variant={supplier ? "secondary" : "primary"}
         size="sm"
         icon={supplier ? Pencil : Plus}
-        onClick={() => setOpen(true)}
+        onClick={openForm}
       >
         {supplier ? "Edit" : "New supplier"}
       </Button>
