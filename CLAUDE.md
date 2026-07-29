@@ -129,8 +129,12 @@ evaluation in SQL; dispatch, render and send in TypeScript.
 idempotent, safe to run every 15 minutes forever.
 
 **The design test: the CRM must be fully usable with email switched off.**
-`automation_settings['email.enabled']` is **false** until SPF/DKIM/DMARC are
-verified on kalaritravels.in. Everything degrades to the call queue.
+`automation_settings['email.enabled']` is **true** as of 2026-07-23 —
+`EMAIL_PROVIDER=gmail` sends live via `info@kalaritravels.in` (Gmail API,
+OAuth refresh token; verified with a real send). No domain/SPF/DKIM/DMARC set
+up yet, so deliverability is Gmail's, not a verified sender's — move to a
+domain sender later. If email is ever switched off again, everything degrades
+to the call queue.
 
 **No provider SDK outside `src/lib/email/adapters/`. Ever.**
 
@@ -223,8 +227,10 @@ supabase/migrations/  the schema. Read the comments.
   fully today; may force per_adult/per_child qty rules).
 - **Package tiers** — `standard`/`premium` category values are reserved,
   unseeded.
-- **Email domain/DNS** (SPF/DKIM/DMARC on kalaritravels.in) before
-  `email.enabled` flips on. Email stays off until then by design.
+- **Email domain/DNS** (SPF/DKIM/DMARC on kalaritravels.in) — email is already
+  live via Gmail (`info@kalaritravels.in`), but Gmail-sent mail without a
+  verified sender is more likely to land in spam. Worth doing before real
+  volume.
 - **What % of customers have usable email?** Under 50% and the call queue is
   the product (it already is the default).
 - **Staff list** — who gets admin, who gets employee accounts.
