@@ -9,6 +9,7 @@ import { MobileTabBar } from "./MobileTabBar";
 import { MobileMorePopover } from "./MobileMorePopover";
 import { ToastProvider } from "@/components/ui/Toast";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/auth/session";
 
 /**
@@ -61,7 +62,10 @@ export function AppShell({
               />
             </header>
             <main className="flex-1">
-              <div className="mx-auto w-full max-w-[1280px] px-2 pt-2">
+              <div
+                key={pathname}
+                className="animate-page-in mx-auto w-full max-w-[1280px] px-2 pt-2"
+              >
                 {children}
               </div>
             </main>
@@ -96,6 +100,7 @@ const WIDE_ROUTES = [
   "/invoices",
   "/payments",
   "/calls",
+  "/suppliers",
   "/admin/calls",
   "/admin/catalogue",
   "/admin/users",
@@ -123,7 +128,7 @@ function DesktopShell({
 
   return (
     <div className="flex gap-3 p-3">
-      <aside className="sticky top-3 hidden h-[calc(100vh-24px)] w-[268px] shrink-0 self-start overflow-hidden rounded-2xl bg-surface shadow-floating lg:flex">
+      <aside className="sticky top-3 hidden h-[calc(100vh-24px)] w-[268px] shrink-0 self-start overflow-hidden rounded-2xl bg-accent-deep shadow-floating lg:flex">
         <Sidebar profile={profile} errorCount={errorCount} />
       </aside>
 
@@ -141,11 +146,13 @@ function DesktopShell({
 
         <main className="flex-1">
           <div
-            className={
+            key={pathname}
+            className={cn(
+              "animate-page-in",
               wide
                 ? "w-full px-6 pb-6 pt-4 lg:px-8"
-                : "mx-auto w-full max-w-[1280px] px-6 pb-6 pt-4 lg:px-10"
-            }
+                : "mx-auto w-full max-w-[1280px] px-6 pb-6 pt-4 lg:px-10",
+            )}
           >
             {children}
           </div>

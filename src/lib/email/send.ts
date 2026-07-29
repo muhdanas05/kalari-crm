@@ -158,6 +158,7 @@ async function logEmail(
   row: {
     id: string;
     customer_id: string | null;
+    supplier_id: string | null;
     case_id: string | null;
     template_key: string | null;
     to_email: string;
@@ -171,6 +172,7 @@ async function logEmail(
   await supabase.from("email_log").insert({
     queue_id: row.id,
     customer_id: row.customer_id,
+    supplier_id: row.supplier_id,
     case_id: row.case_id,
     template_key: row.template_key,
     to_email: row.to_email,

@@ -54,10 +54,10 @@ export default async function PaymentsPage() {
               customers: { name: string } | null;
             } | null;
             return (
-              <li key={p.id} className="border-b border-line last:border-0">
+              <li key={p.id} className="flex items-center gap-2 border-b border-line last:border-0">
                 <Link
                   href={`/invoices/${p.invoice_id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
+                  className="flex flex-1 items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-bold text-ink">
@@ -66,6 +66,7 @@ export default async function PaymentsPage() {
                     <span className="block font-mono text-[11px] text-ink-mid">
                       {inv?.number ?? "—"} · {p.method}
                       {p.reference && ` · ${p.reference}`}
+                      {p.number && <> · {p.number}</>}
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
@@ -78,6 +79,15 @@ export default async function PaymentsPage() {
                   </span>
                   <ChevronRight size={15} className="shrink-0 text-ink-ghost" />
                 </Link>
+                {!p.voided_at && p.number && (
+                  <Link
+                    href={`/payments/${p.id}/receipt`}
+                    target="_blank"
+                    className="shrink-0 pr-4 text-[11.5px] font-semibold text-accent hover:underline"
+                  >
+                    Receipt
+                  </Link>
+                )}
               </li>
             );
           })}

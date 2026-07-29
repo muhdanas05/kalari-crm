@@ -24,18 +24,20 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
   const sections = visibleSections(profile.role);
 
   return (
-    <div className={cn("flex h-full w-full flex-col", className)}>
+    <div className={cn("flex h-full w-full flex-col bg-accent-deep", className)}>
       <div className="flex items-center justify-center px-5 pb-4 pt-5">
-        <Wordmark />
+        <div className="rounded-xl bg-white p-2">
+          <Wordmark />
+        </div>
       </div>
 
-      <div className="mx-5 border-t border-line" />
+      <div className="mx-5 border-t border-white/10" />
 
       <nav className="flex-1 overflow-y-auto px-3 pb-2 pt-4">
         {sections.map((section, i) => (
           <div key={section.title || "top"} className={cn(i > 0 && "mt-5")}>
             {section.title && (
-              <p className="mb-1.5 px-4 font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-gold-deep">
+              <p className="mb-1.5 px-4 font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-gold-soft">
                 {section.title}
               </p>
             )}
@@ -56,22 +58,22 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
         ))}
       </nav>
 
-      <div className="mx-3 mb-3 mt-2 border-t border-line pt-3">
-        <p className="px-4 pb-2 text-[11px] font-medium text-ink-faint">
+      <div className="mx-3 mb-3 mt-2 border-t border-white/10 pt-3">
+        <p className="px-4 pb-2 text-[11px] font-medium text-white/60">
           {profile.name}
-          <span className="ml-1.5 font-mono uppercase tracking-[1px] text-ink-ghost">
+          <span className="ml-1.5 font-mono uppercase tracking-[1px] text-white/35">
             {profile.role}
           </span>
         </p>
         <form action={signOut}>
           <button
             type="submit"
-            className="group flex h-10 w-full items-center gap-3 rounded-xl px-4 text-[13px] font-medium text-ink-mid transition-colors hover:bg-paper-deep hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mist focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            className="group flex h-10 w-full items-center gap-3 rounded-xl px-4 text-[13px] font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-soft focus-visible:ring-offset-2 focus-visible:ring-offset-accent-deep"
           >
             <LogOut
               size={17}
               strokeWidth={1.8}
-              className="text-ink-faint group-hover:text-ink-soft"
+              className="text-white/60 group-hover:text-white"
             />
             <span>Sign out</span>
           </button>

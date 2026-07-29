@@ -8,10 +8,10 @@ import "server-only";
  * NOTHING outside src/lib/email/adapters/ may import a provider SDK. Not the
  * dispatcher, not a server action, not a route. That is the entire point of the
  * seam: the channel could change without business logic knowing, and swapping
- * Resend for SES (or, one day and subject to TDRA, something else) is one file.
+ * Gmail for Resend or SES is one file.
  *
- * If you find yourself importing `resend` somewhere else to "just send one
- * email", that is the moment the seam dies.
+ * If you find yourself importing a provider client somewhere else to "just
+ * send one email", that is the moment the seam dies.
  */
 
 export type Attachment = {
@@ -51,6 +51,10 @@ export async function getAdapter(): Promise<Adapter> {
     case "resend": {
       const { resendAdapter } = await import("./adapters/resend");
       return resendAdapter();
+    }
+    case "gmail": {
+      const { gmailAdapter } = await import("./adapters/gmail");
+      return gmailAdapter();
     }
     case "console":
     default: {

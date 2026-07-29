@@ -6,9 +6,11 @@ import { EdList } from "@/components/ui/EdList";
 import { Tag } from "@/components/ui/Tag";
 import { StageTracker } from "@/components/case/StageTracker";
 import { getCase, stagePathOf } from "@/lib/db/pipelines";
+import { getCaseSupplier, listSuppliers } from "@/lib/db/suppliers";
 import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
-import { AlertTriangle, PhoneCall, UserSquare2 } from "@/components/icons";
+import { AlertTriangle, PhoneCall, UserSquare2, Truck } from "@/components/icons";
+import { SupplierControls } from "./SupplierControls";
 
 export const metadata: Metadata = { title: "Case · Kalari" };
 
@@ -18,7 +20,11 @@ export default async function CasePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const c = await getCase(id);
+  const [c, supplier, suppliers] = await Promise.all([
+    getCase(id),
+    getCaseSupplier(id),
+    listSuppliers(),
+  ]);
   if (!c) notFound();
 
   const path = stagePathOf(c);
@@ -120,6 +126,20 @@ export default async function CasePage({
             <UserSquare2 size={14} />
             Full profile
           </Link>
+        </section>
+
+        <section className="rounded-xl border border-line bg-surface p-6">
+          <h2 className="mb-3 flex items-center gap-2 text-base font-bold tracking-[-0.2px] text-ink">
+            <Truck size={15} className="text-ink-faint" />
+            Supplier
+          </h2>
+          <SupplierControls
+            caseId={c.id!}
+            current={supplier}
+            suppliers={suppliers}
+            serviceName={c.service_name}
+            pax={pax}
+          />
         </section>
       </div>
     </div>

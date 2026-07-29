@@ -45,15 +45,24 @@ export function SidebarNavItem({
       className={cn(
         "group relative flex h-10 items-center gap-3 rounded-xl px-4 text-[13.5px] transition-colors",
         active
-          ? "bg-accent font-semibold text-white shadow-sm"
-          : "font-medium text-ink-soft hover:bg-paper-deep hover:text-ink",
+          ? "bg-white/10 font-semibold text-white"
+          : "font-medium text-white/70 hover:bg-white/[0.07] hover:text-white",
       )}
     >
+      {/* Gold active indicator — not white-on-gold, which fails AA (see
+          tailwind.config.ts's rationale for accent vs gold roles). */}
+      {active && (
+        <span
+          className="nav-indicator-in absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-gold-soft"
+          aria-hidden
+        />
+      )}
+
       <span className="relative shrink-0">
         <Icon
           size={17}
           strokeWidth={active ? 2.5 : 2}
-          className={active ? "text-white" : "text-ink"}
+          className={active ? "text-gold-soft" : "text-white/55"}
         />
         {/*
           The red dot. Sits ON the icon so it reads at a glance from anywhere in
@@ -62,10 +71,7 @@ export function SidebarNavItem({
         */}
         {errorDot && (
           <span
-            className={cn(
-              "absolute -right-1 -top-1 h-2 w-2 rounded-full bg-alert",
-              active ? "ring-2 ring-accent" : "ring-2 ring-surface",
-            )}
+            className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-alert ring-2 ring-accent-deep"
             aria-hidden
           />
         )}

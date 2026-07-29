@@ -391,6 +391,7 @@ export type Database = {
           stage_entered_at: string
           stage_id: string
           status: string
+          supplier_id: string | null
           updated_at: string
           visa_issue_date: string | null
         }
@@ -410,6 +411,7 @@ export type Database = {
           stage_entered_at?: string
           stage_id: string
           status?: string
+          supplier_id?: string | null
           updated_at?: string
           visa_issue_date?: string | null
         }
@@ -429,6 +431,7 @@ export type Database = {
           stage_entered_at?: string
           stage_id?: string
           status?: string
+          supplier_id?: string | null
           updated_at?: string
           visa_issue_date?: string | null
         }
@@ -474,6 +477,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stages"
             referencedColumns: ["id", "pipeline_id"]
+          },
+          {
+            foreignKeyName: "cases_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -702,6 +712,7 @@ export type Database = {
           sandboxed: boolean
           status: Database["public"]["Enums"]["email_status"]
           subject: string
+          supplier_id: string | null
           template_key: string | null
           to_email: string
         }
@@ -722,6 +733,7 @@ export type Database = {
           sandboxed?: boolean
           status: Database["public"]["Enums"]["email_status"]
           subject: string
+          supplier_id?: string | null
           template_key?: string | null
           to_email: string
         }
@@ -742,6 +754,7 @@ export type Database = {
           sandboxed?: boolean
           status?: Database["public"]["Enums"]["email_status"]
           subject?: string
+          supplier_id?: string | null
           template_key?: string | null
           to_email?: string
         }
@@ -774,6 +787,13 @@ export type Database = {
             referencedRelation: "email_queue"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "email_log_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       email_queue: {
@@ -794,6 +814,7 @@ export type Database = {
           sent_at: string | null
           status: Database["public"]["Enums"]["email_status"]
           subject: string
+          supplier_id: string | null
           template_key: string | null
           to_email: string
         }
@@ -814,6 +835,7 @@ export type Database = {
           sent_at?: string | null
           status?: Database["public"]["Enums"]["email_status"]
           subject: string
+          supplier_id?: string | null
           template_key?: string | null
           to_email: string
         }
@@ -834,6 +856,7 @@ export type Database = {
           sent_at?: string | null
           status?: Database["public"]["Enums"]["email_status"]
           subject?: string
+          supplier_id?: string | null
           template_key?: string | null
           to_email?: string
         }
@@ -885,6 +908,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_queue_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {
@@ -1395,9 +1425,12 @@ export type Database = {
           id: string
           invoice_id: string
           method: Database["public"]["Enums"]["payment_method"]
+          number: string | null
           paid_on: string
           recorded_by: string
           reference: string | null
+          seq: number | null
+          series: string | null
           void_reason: string | null
           voided_at: string | null
           voided_by: string | null
@@ -1408,9 +1441,12 @@ export type Database = {
           id?: string
           invoice_id: string
           method: Database["public"]["Enums"]["payment_method"]
+          number?: string | null
           paid_on: string
           recorded_by: string
           reference?: string | null
+          seq?: number | null
+          series?: string | null
           void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
@@ -1421,9 +1457,12 @@ export type Database = {
           id?: string
           invoice_id?: string
           method?: Database["public"]["Enums"]["payment_method"]
+          number?: string | null
           paid_on?: string
           recorded_by?: string
           reference?: string | null
+          seq?: number | null
+          series?: string | null
           void_reason?: string | null
           voided_at?: string | null
           voided_by?: string | null
@@ -1703,6 +1742,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          archived_at: string | null
+          city: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          supplies: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          archived_at?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          supplies?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          archived_at?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          supplies?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
       }
       suppressions: {
         Row: {

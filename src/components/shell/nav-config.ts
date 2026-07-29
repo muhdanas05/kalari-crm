@@ -11,6 +11,7 @@ import {
   Plug,
   Zap,
   History,
+  Building2,
   type LucideIcon,
 } from "@/components/icons";
 import type { Role } from "@/lib/auth/session";
@@ -57,6 +58,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Pipeline", href: "/pipeline", icon: Kanban },
       { label: "Customers", href: "/customers", icon: UserSquare2 },
+      { label: "Suppliers", href: "/suppliers", icon: Building2 },
     ],
   },
   {

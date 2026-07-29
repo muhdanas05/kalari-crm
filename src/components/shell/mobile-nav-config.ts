@@ -9,6 +9,7 @@ import {
   PhoneCall,
   Tags,
   Plug,
+  Building2,
   type LucideIcon,
 } from "@/components/icons";
 import type { Role } from "@/lib/auth/session";
@@ -66,10 +67,10 @@ export function moreSectionsFor(role: Role): MobileNavSection[] {
   const sections: MobileNavSection[] = [
     {
       title: "Pipeline",
-      items:
-        role === "employee"
-          ? [{ label: "Customers", href: "/customers", icon: Users }]
-          : [],
+      items: [
+        ...(role === "employee" ? [{ label: "Customers", href: "/customers", icon: Users }] : []),
+        { label: "Suppliers", href: "/suppliers", icon: Building2 },
+      ],
     },
     {
       title: "Money",

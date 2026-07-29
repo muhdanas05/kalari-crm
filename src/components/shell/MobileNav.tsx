@@ -40,14 +40,14 @@ export function MobileNav({ profile, errorCount = 0, open, onClose }: Props) {
       />
       <div
         className={cn(
-          "absolute inset-y-3 left-3 flex w-[280px] flex-col rounded-2xl bg-surface shadow-floating transition-transform duration-200",
+          "absolute inset-y-3 left-3 flex w-[280px] flex-col rounded-2xl bg-accent-deep shadow-floating transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-[110%]"
         )}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-ink-mid transition-colors hover:bg-paper-deep hover:text-ink"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           aria-label="Close navigation"
         >
           <X size={16} />

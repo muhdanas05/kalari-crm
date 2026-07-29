@@ -264,9 +264,27 @@ export default async function InvoicePage({
                       <span className="block text-[10.5px] text-ink-faint">
                         {formatDate(p.paid_on)} · {p.method}
                         {p.reference && ` · ${p.reference}`}
+                        {p.number && (
+                          <>
+                            {" · "}
+                            <span className="font-mono">{p.number}</span>
+                          </>
+                        )}
                       </span>
                     </span>
-                    {p.voided_at && <Tag tone="neutral">Void</Tag>}
+                    {p.voided_at ? (
+                      <Tag tone="neutral">Void</Tag>
+                    ) : (
+                      p.number && (
+                        <Link
+                          href={`/payments/${p.id}/receipt`}
+                          target="_blank"
+                          className="shrink-0 text-[11.5px] font-semibold text-accent hover:underline"
+                        >
+                          Receipt
+                        </Link>
+                      )
+                    )}
                   </li>
                 ))}
               </ul>
