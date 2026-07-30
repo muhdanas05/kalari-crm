@@ -5,13 +5,11 @@ import { usePathname } from "next/navigation";
 import { type LucideIcon } from "@/components/icons";
 import { allHrefs } from "./nav-config";
 import { cn } from "@/lib/utils";
-import type { Role } from "@/lib/auth/session";
 
 type Props = {
   label: string;
   href: string;
   icon: LucideIcon;
-  role: Role;
   onNavigate?: () => void;
   /** Optional count pill (e.g. calls due today). */
   badge?: number;
@@ -23,7 +21,6 @@ export function SidebarNavItem({
   label,
   href,
   icon: Icon,
-  role,
   onNavigate,
   badge,
   errorDot,
@@ -32,7 +29,7 @@ export function SidebarNavItem({
 
   // Longest-prefix match wins, so /admin/catalogue highlights itself rather than
   // a parent /admin item.
-  const best = allHrefs(role)
+  const best = allHrefs()
     .filter((h) => pathname === h || pathname.startsWith(h + "/"))
     .reduce((a, b) => (b.length > a.length ? b : a), "");
   const active = best !== "" && href === best;

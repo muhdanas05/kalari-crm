@@ -6,21 +6,14 @@ import { Tag } from "@/components/ui/Tag";
 import { PhoneCall, ShieldOff, ChevronRight } from "@/components/icons";
 import { REASON_LABEL, priorityTone, type CallTask } from "@/lib/calls/display";
 import { LogCallSheet } from "./LogCallSheet";
-import { AssignCall } from "./AssignCall";
 import { cn } from "@/lib/utils";
-
-export type Person = { id: string; name: string };
 
 export function CallList({
   due,
   later,
-  people = [],
-  canAssign = false,
 }: {
   due: CallTask[];
   later: CallTask[];
-  people?: Person[];
-  canAssign?: boolean;
 }) {
   const [active, setActive] = useState<CallTask | null>(null);
 
@@ -31,19 +24,10 @@ export function CallList({
           title="Due now"
           tasks={due}
           onLog={setActive}
-          people={people}
-          canAssign={canAssign}
           empty="Nothing due. The queue is clear."
         />
         {later.length > 0 && (
-          <Section
-            title="Scheduled"
-            tasks={later}
-            onLog={setActive}
-            people={people}
-            canAssign={canAssign}
-            muted
-          />
+          <Section title="Scheduled" tasks={later} onLog={setActive} muted />
         )}
       </div>
 
@@ -56,16 +40,12 @@ function Section({
   title,
   tasks,
   onLog,
-  people,
-  canAssign,
   empty,
   muted,
 }: {
   title: string;
   tasks: CallTask[];
   onLog: (t: CallTask) => void;
-  people: Person[];
-  canAssign: boolean;
   empty?: string;
   muted?: boolean;
 }) {
@@ -142,19 +122,6 @@ function Section({
                     <ChevronRight size={12} />
                   </button>
                 </div>
-              </div>
-
-              <div className="mt-2 flex items-center justify-between gap-2 border-t border-line pt-2">
-                <p className="truncate text-[10.5px] font-medium text-ink-ghost">
-                  {t.assignee_name ?? "Unassigned"}
-                </p>
-                {canAssign && (
-                  <AssignCall
-                    taskId={t.id!}
-                    current={t.assigned_user_id}
-                    people={people}
-                  />
-                )}
               </div>
             </li>
           ))}

@@ -69,12 +69,10 @@ export function AppShell({
           </div>
 
           <MobileTabBar
-            role={profile.role}
             open={fullNavOpen}
             onToggle={() => setFullNavOpen((v) => !v)}
           />
           <MobileMorePopover
-            role={profile.role}
             open={fullNavOpen}
             onClose={() => setFullNavOpen(false)}
           />
@@ -101,7 +99,6 @@ const WIDE_ROUTES = [
   "/accounts",
   "/admin/calls",
   "/admin/catalogue",
-  "/admin/users",
   "/admin/logs",
 ];
 

@@ -14,12 +14,8 @@ type Priority = Database["public"]["Enums"]["call_priority"];
 
 export function NewCallButton({
   customers,
-  people,
-  canAssign,
 }: {
   customers: { id: string; name: string; phone: string }[];
-  people: { id: string; name: string }[];
-  canAssign: boolean;
 }) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -28,7 +24,6 @@ export function NewCallButton({
   const [context, setContext] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [dueOn, setDueOn] = useState(todayKolkata());
-  const [assignTo, setAssignTo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const submit = () => {
@@ -37,13 +32,7 @@ export function NewCallButton({
     setError(null);
 
     start(async () => {
-      const res = await createCall({
-        customerId,
-        context,
-        priority,
-        dueOn,
-        assignTo: assignTo || undefined,
-      });
+      const res = await createCall({ customerId, context, priority, dueOn });
       if (!res.ok) return setError(res.error);
       toast("Added to the call list.", "ok");
       setOpen(false);
@@ -129,20 +118,6 @@ export function NewCallButton({
               />
             </Field>
           </div>
-
-          {canAssign && (
-            <Field label="Assign to">
-              <Select
-                value={assignTo}
-                onChange={setAssignTo}
-                ariaLabel="Assign to"
-                options={[
-                  { value: "", label: "Me" },
-                  ...people.map((p) => ({ value: p.id, label: p.name })),
-                ]}
-              />
-            </Field>
-          )}
 
           {error && (
             <p

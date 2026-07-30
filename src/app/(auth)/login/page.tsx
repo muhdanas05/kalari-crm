@@ -12,7 +12,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const profile = await getProfile();
-  if (profile) redirect(profile.role === "employee" ? "/calls" : "/dashboard");
+  if (profile) redirect("/dashboard");
 
   const { next } = await searchParams;
 

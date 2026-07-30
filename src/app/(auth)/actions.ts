@@ -48,14 +48,7 @@ export async function signIn(
   }
 
   revalidatePath("/", "layout");
-  // Employees live on the call list; admins on the dashboard (§5.7).
-  const home =
-    next !== "/dashboard"
-      ? next
-      : profile.role === "employee"
-        ? "/calls"
-        : "/dashboard";
-  redirect(home);
+  redirect(next);
 }
 
 export async function signOut() {

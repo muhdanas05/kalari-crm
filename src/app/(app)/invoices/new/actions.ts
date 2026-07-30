@@ -188,7 +188,6 @@ async function openCaseForService(
       service_id: serviceId,
       pipeline_id: pipelineId,
       stage_id: firstStage.stage_id,
-      assigned_user_id: profileId,
       pax_adults: paxAdults,
       pax_children: paxChildren,
       created_by: profileId,

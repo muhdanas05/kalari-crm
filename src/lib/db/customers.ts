@@ -3,19 +3,14 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
-/**
- * Customers list. RLS scopes it: an employee sees only customers assigned to
- * them (§3.18), so there is deliberately no role branch here.
- */
+/** Customers list. */
 export async function listCustomers(
   opts: { q?: string; category?: string; limit?: number } = {},
 ) {
   const supabase = await createClient();
   let query = supabase
     .from("customers")
-    .select(
-      "id, name, phone, email, category, nationality, source, assigned_user_id, created_at",
-    )
+    .select("id, name, phone, email, category, nationality, source, created_at")
     .is("archived_at", null)
     .order("created_at", { ascending: false })
     .limit(opts.limit ?? 100);
@@ -105,17 +100,5 @@ export async function getCustomerActivity(customerId: string, limit = 50) {
     .order("occurred_at", { ascending: false })
     .limit(limit);
 
-  return data ?? [];
-}
-
-/** Who a case can be assigned to. Admin-facing. */
-export async function listAssignableUsers() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, name, role, in_assignment_pool")
-    .eq("active", true)
-    .is("archived_at", null)
-    .order("name");
   return data ?? [];
 }

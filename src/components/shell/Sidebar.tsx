@@ -3,7 +3,7 @@
 import { LogOut } from "@/components/icons";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { SidebarNavItem } from "./SidebarNavItem";
-import { visibleSections } from "./nav-config";
+import { NAV_SECTIONS } from "./nav-config";
 import { signOut } from "@/app/(auth)/actions";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/auth/session";
@@ -21,8 +21,6 @@ type Props = {
 };
 
 export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Props) {
-  const sections = visibleSections(profile.role);
-
   return (
     <div className={cn("flex h-full w-full flex-col bg-accent-deep", className)}>
       <div className="flex items-center justify-center px-5 pb-4 pt-5">
@@ -34,7 +32,7 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
       <div className="mx-5 border-t border-white/10" />
 
       <nav className="flex-1 overflow-y-auto px-3 pb-2 pt-4">
-        {sections.map((section, i) => (
+        {NAV_SECTIONS.map((section, i) => (
           <div key={section.title || "top"} className={cn(i > 0 && "mt-5")}>
             {section.title && (
               <p className="mb-1.5 px-4 font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-gold-soft">
@@ -48,7 +46,6 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
                   label={item.label}
                   href={item.href}
                   icon={item.icon}
-                  role={profile.role}
                   onNavigate={onNavigate}
                   errorDot={item.errorBadge ? errorCount > 0 : false}
                 />
@@ -61,9 +58,6 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
       <div className="mx-3 mb-3 mt-2 border-t border-white/10 pt-3">
         <p className="px-4 pb-2 text-[11px] font-medium text-white/60">
           {profile.name}
-          <span className="ml-1.5 font-mono uppercase tracking-[1px] text-white/35">
-            {profile.role}
-          </span>
         </p>
         <form action={signOut}>
           <button

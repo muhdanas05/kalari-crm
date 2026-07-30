@@ -71,10 +71,7 @@ export function CaseCard({ row }: { row: CaseRow }) {
         )}
       </div>
 
-      <footer className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2">
-        <span className="truncate text-[11px] font-medium text-ink-faint">
-          {row.assignee_name ?? "Unassigned"}
-        </span>
+      <footer className="mt-2.5 flex items-center justify-end border-t border-line pt-2">
         <span className="shrink-0 font-mono text-[10.5px] text-ink-ghost">
           {row.days_in_stage}d
         </span>

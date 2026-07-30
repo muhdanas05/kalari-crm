@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Create a CRM user.
+ * Create a CRM login.
  *
- * PRD §4: "No self-signup — Admin creates users." There is no register route,
- * by design. This script is the bootstrap for the FIRST admin; after that,
- * the admin creates users in-app.
+ * No self-signup — there is no register route, by design. Single-admin mode:
+ * every login this creates is an admin (the `role` column still exists in the
+ * database, always 'admin' — recreating the enum to remove 'employee' entirely
+ * was judged not worth the risk for zero behavioural difference).
  *
- *   node scripts/create-user.mjs <email> <password> <name> [admin|employee]
+ *   node scripts/create-user.mjs <email> <password> <name>
  *
  * This is one of the few legitimate uses of the service_role key (see the
  * discipline rule in lib/supabase/server.ts): creating an auth user genuinely
@@ -32,13 +33,9 @@ function parseEnv(path) {
   return out;
 }
 
-const [email, password, name, role = 'employee'] = process.argv.slice(2);
+const [email, password, name] = process.argv.slice(2);
 if (!email || !password || !name) {
-  console.error('usage: node scripts/create-user.mjs <email> <password> <name> [admin|employee]');
-  process.exit(1);
-}
-if (!['admin', 'employee'].includes(role)) {
-  console.error(`role must be admin or employee, got "${role}"`);
+  console.error('usage: node scripts/create-user.mjs <email> <password> <name>');
   process.exit(1);
 }
 
@@ -63,7 +60,7 @@ if (error) {
 // then see nothing, which is a confusing failure; create both or neither.
 const { error: profileError } = await supabase
   .from('profiles')
-  .upsert({ id: data.user.id, name, email, role, active: true }, { onConflict: 'id' });
+  .upsert({ id: data.user.id, name, email, role: 'admin', active: true }, { onConflict: 'id' });
 
 if (profileError) {
   console.error('profile insert failed:', profileError.message);
@@ -72,5 +69,5 @@ if (profileError) {
   process.exit(1);
 }
 
-console.log(`✓ created ${role}: ${name} <${email}>`);
+console.log(`✓ created: ${name} <${email}>`);
 console.log(`  id: ${data.user.id}`);

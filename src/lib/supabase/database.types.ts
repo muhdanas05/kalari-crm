@@ -352,7 +352,6 @@ export type Database = {
       cases: {
         Row: {
           archived_at: string | null
-          assigned_user_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string
@@ -372,7 +371,6 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
-          assigned_user_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id: string
@@ -392,7 +390,6 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
-          assigned_user_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string
@@ -411,13 +408,6 @@ export type Database = {
           visa_issue_date?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "cases_assigned_user_id_fkey"
-            columns: ["assigned_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "cases_created_by_fkey"
             columns: ["created_by"]
@@ -466,7 +456,6 @@ export type Database = {
         Row: {
           archived_at: string | null
           archived_by: string | null
-          assigned_user_id: string | null
           category: string | null
           created_at: string
           created_by: string | null
@@ -500,7 +489,6 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           archived_by?: string | null
-          assigned_user_id?: string | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -534,7 +522,6 @@ export type Database = {
         Update: {
           archived_at?: string | null
           archived_by?: string | null
-          assigned_user_id?: string | null
           category?: string | null
           created_at?: string
           created_by?: string | null
@@ -569,13 +556,6 @@ export type Database = {
           {
             foreignKeyName: "customers_archived_by_fkey"
             columns: ["archived_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customers_assigned_user_id_fkey"
-            columns: ["assigned_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1589,7 +1569,6 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
-          in_assignment_pool: boolean
           name: string
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -1601,7 +1580,6 @@ export type Database = {
           created_at?: string
           email?: string | null
           id: string
-          in_assignment_pool?: boolean
           name: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -1613,7 +1591,6 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          in_assignment_pool?: boolean
           name?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -1968,8 +1945,6 @@ export type Database = {
       }
       cases_board_v: {
         Row: {
-          assigned_user_id: string | null
-          assignee_name: string | null
           customer_id: string | null
           customer_name: string | null
           customer_phone: string | null
@@ -1993,13 +1968,6 @@ export type Database = {
           visa_issue_date: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "cases_assigned_user_id_fkey"
-            columns: ["assigned_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "cases_customer_id_fkey"
             columns: ["customer_id"]
@@ -2161,12 +2129,7 @@ export type Database = {
     }
     Functions: {
       admin_set_user: {
-        Args: {
-          p_active?: boolean
-          p_in_pool?: boolean
-          p_role?: Database["public"]["Enums"]["user_role"]
-          p_user_id: string
-        }
+        Args: { p_active?: boolean; p_user_id: string }
         Returns: undefined
       }
       archive_case: { Args: { p_case_id: string }; Returns: undefined }
@@ -2227,7 +2190,6 @@ export type Database = {
           p_utm_term?: string
         }
         Returns: {
-          assigned_to: string
           case_id: string
           customer_id: string
           is_new_customer: boolean

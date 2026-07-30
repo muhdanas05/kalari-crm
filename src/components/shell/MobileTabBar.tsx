@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { tabsFor, TAB_MORE_ICON, type MobileNavLink } from "./mobile-nav-config";
+import { tabs as navTabs, TAB_MORE_ICON, type MobileNavLink } from "./mobile-nav-config";
 import { cn } from "@/lib/utils";
-import type { Role } from "@/lib/auth/session";
 
 type Props = {
-  role: Role;
   open: boolean;
   onToggle: () => void;
 };
@@ -15,12 +13,11 @@ type Props = {
 /**
  * Floating bottom nav: one rounded-full white pill hovering above the home
  * indicator, four equal slots, no FAB. Kept deliberately — a hamburger drawer is
- * not adopted. Slot 3 is role-dependent (employees get their call list).
- * Mobile only (<sm).
+ * not adopted. Mobile only (<sm).
  */
-export function MobileTabBar({ role, open, onToggle }: Props) {
+export function MobileTabBar({ open, onToggle }: Props) {
   const pathname = usePathname();
-  const tabs = tabsFor(role);
+  const tabs = navTabs();
 
   const isActive = (href: string) =>
     !open && (pathname === href || pathname.startsWith(href + "/"));

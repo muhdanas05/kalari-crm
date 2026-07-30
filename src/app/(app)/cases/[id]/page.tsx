@@ -100,7 +100,6 @@ export default async function CasePage({
             rows={[
               { label: "Stage", value: <Tag tone="accent">{c.stage_name}</Tag> },
               { label: "Days in stage", value: String(c.days_in_stage ?? 0), mono: true },
-              { label: "Owner", value: c.assignee_name ?? "Unassigned" },
               { label: "Opened", value: formatDate(c.opened_at) },
               {
                 label: "People",

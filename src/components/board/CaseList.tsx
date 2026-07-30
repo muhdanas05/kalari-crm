@@ -57,9 +57,6 @@ export function CaseList({ cases }: { cases: CaseRow[] }) {
                     {formatPaise(c.outstanding_paise!)}
                   </span>
                 )}
-                <span className="text-[10.5px] font-medium text-ink-ghost">
-                  {c.assignee_name ?? "Unassigned"}
-                </span>
               </div>
 
               <ChevronRight size={15} className="shrink-0 text-ink-ghost" />
