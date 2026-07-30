@@ -39,6 +39,7 @@ export async function GET(
   if (!path) {
     const gen = await generateAndAttachInvoicePdf(id);
     if (!gen.ok) {
+      console.error(`[invoice pdf] ${id}: ${gen.error}`);
       return NextResponse.json({ error: "could not generate PDF" }, { status: 500 });
     }
     path = gen.path;
