@@ -163,12 +163,17 @@ export async function renderInvoicePdf(inv: InvoiceForPdf): Promise<Buffer> {
   if (inv.gst_paise > 0) totalRow("GST", formatPaiseBare(inv.gst_paise));
 
   doc.setDrawColor(GOLD).setLineWidth(1);
-  doc.line(labelX, ty - 6, valueX, ty - 6);
+  doc.line(labelX, ty - 4, valueX, ty - 4);
+  // Grand Total renders at 12pt bold — enough clearance below the rule that
+  // its ascent doesn't run back into the line (it did at the old 6pt gap).
+  ty += 14;
   totalRow("Grand Total", formatPaiseBare(inv.total_paise), true, true);
 
   if (inv.amount_note) {
     doc.setFont("helvetica", "italic").setFontSize(8.5).setTextColor(MID);
-    doc.text(inv.amount_note, M, ty + 10, { maxWidth: W - 2 * M });
+    // Free text (defaults to the formatted total, e.g. "₹500.00") — core
+    // Helvetica has no ₹ glyph, same reason totalRow() uses "Rs." above.
+    doc.text(inv.amount_note.replace(/₹/g, "Rs. "), M, ty + 10, { maxWidth: W - 2 * M });
   }
 
   // ── Footer ───────────────────────────────────────────────────────────────
