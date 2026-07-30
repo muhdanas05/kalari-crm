@@ -7,10 +7,19 @@ const nextConfig: NextConfig = {
   // Unset (the normal case) → default `.next`, identical to stock behaviour.
   ...(process.env.BUILD_DIST ? { distDir: process.env.BUILD_DIST } : {}),
 
-  // Railway runs the app in a container, not on Vercel's platform. `standalone`
-  // emits a self-contained server with only the node_modules it actually needs,
-  // which is what keeps the image small and the cold start quick.
-  output: "standalone",
+  // NO `output: "standalone"`.
+  //
+  // It was here to shrink the container, but it is incompatible with the way
+  // this app actually starts: `next start` refuses to serve a standalone build
+  // ("next start does not work with output: standalone" — Next says so at boot,
+  // then serves a broken tree). Standalone only pays off when a Dockerfile
+  // copies `.next/standalone` into a bare image; nixpacks keeps node_modules in
+  // the same container either way, so the saving was theoretical and the
+  // breakage was real.
+  //
+  // If the image size ever matters: switch the start command to
+  // `node .next/standalone/server.js` AND copy `.next/static` + `public` into
+  // `.next/standalone` after the build. Both halves, or it serves no CSS.
 
   // The Supabase JS client is CommonJS-heavy; this keeps it out of the client
   // bundle where it isn't needed.
