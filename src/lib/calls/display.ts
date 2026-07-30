@@ -23,6 +23,7 @@ export const REASON_LABEL: Record<CallReason, string> = {
   reengagement: "Re-engagement",
   promise_due: "Promised payment",
   wrong_number_admin: "Wrong number",
+  input_needed: "Needs input",
 };
 
 export const OUTCOME_LABEL: Record<CallOutcome, string> = {

@@ -12,6 +12,7 @@ import {
   Building2,
   BookOpen,
   ScrollText,
+  GitBranch,
   type LucideIcon,
 } from "@/components/icons";
 
@@ -74,6 +75,7 @@ export function moreSections(): MobileNavSection[] {
       items: [
         { label: "Call Activity", href: "/admin/calls", icon: PhoneCall },
         { label: "Catalogue", href: "/admin/catalogue", icon: Tags },
+        { label: "Pipeline Stages", href: "/admin/stages", icon: GitBranch },
         { label: "Integrations", href: "/admin/integrations", icon: Plug },
         { label: "Logs", href: "/admin/logs", icon: ScrollText },
       ],

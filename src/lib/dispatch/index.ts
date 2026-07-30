@@ -178,11 +178,19 @@ async function tryQueueEmail(
 ): Promise<"queued" | "sandboxed" | "skipped"> {
   const dedupe = `${event.type}:${event.id}`;
 
-  const { data: template } = await supabase
-    .from("email_templates")
-    .select("*")
-    .eq("key", templateKey)
-    .maybeSingle();
+  // case.input_needed does not use the shared template table at all — its
+  // content is per-stage, written by the office for that exact stage
+  // (stage_email_config.custom_subject/custom_body), not picked from a list.
+  const template =
+    event.type === "case.input_needed"
+      ? await customStageTemplate(supabase, event)
+      : (
+          await supabase
+            .from("email_templates")
+            .select("*")
+            .eq("key", templateKey)
+            .maybeSingle()
+        ).data;
 
   if (!template || !template.enabled) return "skipped";
 
@@ -244,6 +252,45 @@ async function tryQueueEmail(
   // 23505 = we already queued this exact event. Not an error.
   if (error && error.code !== "23505") throw new Error(error.message);
   return error ? "skipped" : "queued";
+}
+
+/**
+ * The custom email for a checkpoint stage — read from stage_email_config for
+ * the case's CURRENT stage, not from event.payload, in case the case has
+ * already moved on by the time this event is processed.
+ *
+ * Same shape as an email_templates row so tryQueueEmail's downstream logic
+ * (enabled check, is_promotional, render()) does not need to know which
+ * source it came from. Checkpoint emails are transactional (a document, a
+ * payment, an answer is needed to continue), never promotional.
+ */
+async function customStageTemplate(
+  supabase: ReturnType<typeof createAdminClient>,
+  event: EventRow,
+): Promise<{ subject: string; body: string; enabled: boolean; is_promotional: boolean } | null> {
+  if (!event.case_id) return null;
+
+  const { data: kase } = await supabase
+    .from("cases")
+    .select("stage_id")
+    .eq("id", event.case_id)
+    .maybeSingle();
+  if (!kase?.stage_id) return null;
+
+  const { data: cfg } = await supabase
+    .from("stage_email_config")
+    .select("custom_subject, custom_body")
+    .eq("stage_id", kase.stage_id)
+    .maybeSingle();
+
+  if (!cfg?.custom_subject?.trim() || !cfg?.custom_body?.trim()) return null;
+
+  return {
+    subject: cfg.custom_subject,
+    body: cfg.custom_body,
+    enabled: true,
+    is_promotional: false,
+  };
 }
 
 /**
@@ -367,6 +414,8 @@ async function callContext(
     }
     case "case.stuck":
       return `Stuck at ${p.stage ?? "this stage"} for ${p.days ?? "?"} days`;
+    case "case.input_needed":
+      return `${p.stage ?? "This stage"} needs something from them — check the email sent`;
     case "quote.unanswered":
       return "Quoted, no answer — follow up";
     case "renewal.due":
@@ -515,6 +564,7 @@ function ruleSettingKey(type: EventRow["type"]): string | null {
     "lead.created": "rule.case_opened",
     "case.stage_changed": "rule.stage_changed",
     "case.completed": "rule.case_complete",
+    "case.input_needed": "rule.input_needed",
     "case.stuck": "rule.case_stuck",
     "docs.missing": "rule.docs_missing",
     "quote.unanswered": "rule.quote_unanswered",

@@ -1682,21 +1682,30 @@ export type Database = {
       }
       stage_email_config: {
         Row: {
+          custom_body: string | null
+          custom_subject: string | null
           enabled: boolean
+          requires_input: boolean
           stage_id: string
           template_key: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          custom_body?: string | null
+          custom_subject?: string | null
           enabled?: boolean
+          requires_input?: boolean
           stage_id: string
           template_key?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          custom_body?: string | null
+          custom_subject?: string | null
           enabled?: boolean
+          requires_input?: boolean
           stage_id?: string
           template_key?: string | null
           updated_at?: string
@@ -2323,6 +2332,7 @@ export type Database = {
         | "reengagement"
         | "promise_due"
         | "wrong_number_admin"
+        | "input_needed"
       call_task_status: "open" | "done" | "escalated" | "auto_closed"
       doc_state: "outstanding" | "received" | "waived"
       doc_type: "invoice" | "credit_note"
@@ -2347,6 +2357,7 @@ export type Database = {
         | "renewal.due"
         | "reengagement.due"
         | "email.failed"
+        | "case.input_needed"
       invoice_lifecycle: "issued" | "void"
       payment_method: "cash" | "transfer" | "cheque"
       qty_rule: "once" | "once_per_file" | "per_person"
@@ -2514,6 +2525,7 @@ export const Constants = {
         "reengagement",
         "promise_due",
         "wrong_number_admin",
+        "input_needed",
       ],
       call_task_status: ["open", "done", "escalated", "auto_closed"],
       doc_state: ["outstanding", "received", "waived"],
@@ -2540,6 +2552,7 @@ export const Constants = {
         "renewal.due",
         "reengagement.due",
         "email.failed",
+        "case.input_needed",
       ],
       invoice_lifecycle: ["issued", "void"],
       payment_method: ["cash", "transfer", "cheque"],

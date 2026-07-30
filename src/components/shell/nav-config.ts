@@ -13,6 +13,7 @@ import {
   Building2,
   BookOpen,
   ScrollText,
+  GitBranch,
   type LucideIcon,
 } from "@/components/icons";
 
@@ -71,6 +72,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Call Activity", href: "/admin/calls", icon: PhoneCall },
       { label: "Service Catalogue", href: "/admin/catalogue", icon: Tags },
+      { label: "Pipeline Stages", href: "/admin/stages", icon: GitBranch },
       { label: "Integrations", href: "/admin/integrations", icon: Plug },
       { label: "Logs", href: "/admin/logs", icon: ScrollText },
     ],

@@ -61,6 +61,19 @@ export const DISPATCH_RULES: Record<EventType, DispatchRule> = {
     label: "Application complete",
   },
 
+  // A checkpoint the office marked "needs input from the customer" — a
+  // document, a payment, an answer. The email content is NOT this string; it
+  // comes from stage_email_config.custom_subject/custom_body for the case's
+  // current stage (see tryQueueEmail's special case). "custom" here is only a
+  // truthy marker so the dispatcher knows this event type emails at all.
+  // Always a call too — a checkpoint that only sends an email nobody opens is
+  // a checkpoint that quietly stalls.
+  "case.input_needed": {
+    email: "custom",
+    call: { reason: "input_needed", priority: "medium", when: "always" },
+    label: "Needs input from customer",
+  },
+
   // Stuck is an internal problem, not a customer one. Never email the customer
   // to say we haven't done anything — call them.
   "case.stuck": {
