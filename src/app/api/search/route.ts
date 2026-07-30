@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "unauthorised" }, { status: 401 });
 
   // Phone search must tolerate however the user typed it: 050 482 7719,
-  // +971504827719, 00971... all describe one person (§3.27). Reduce to digits
+  // +919567324364, 0091... all describe one person (§3.27). Reduce to digits
   // and match the tail against the generated phone_e164 column.
   const digits = q.replace(/\D/g, "");
   const escaped = q.replace(/[%_,()]/g, "");

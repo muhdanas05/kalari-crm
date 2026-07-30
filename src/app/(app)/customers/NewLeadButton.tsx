@@ -98,7 +98,7 @@ export function NewLeadButton({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               inputMode="tel"
-              placeholder="+971 50 000 0000"
+              placeholder="+91 95673 24364"
               className="h-10 w-full rounded-lg border border-line bg-paper px-3 font-mono text-[13px] text-ink outline-none placeholder:text-ink-ghost focus:border-accent focus:bg-surface"
             />
           </Field>
@@ -107,7 +107,7 @@ export function NewLeadButton({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               type="email"
-              placeholder="name@example.ae"
+              placeholder="name@example.com"
               className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] text-ink outline-none placeholder:text-ink-ghost focus:border-accent focus:bg-surface"
             />
           </Field>

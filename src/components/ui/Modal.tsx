@@ -37,21 +37,41 @@ export function Modal({
 }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * onClose in a ref, NOT in the effect's deps.
+   *
+   * This is load-bearing. Every caller passes an inline arrow
+   * (`onClose={() => !pending && setOpen(false)}`), which is a fresh function
+   * identity on every render. With `onClose` in the dep array, the effect below
+   * re-ran on EVERY KEYSTROKE — and its last act is `panelRef.focus()`, which
+   * yanked the caret out of whatever field was being typed in. That was the
+   * "it unselects when I type" bug, in every dialog in the app at once.
+   *
+   * The ref keeps the Escape handler pointed at the current callback while the
+   * effect itself depends only on `open` — so focus is claimed once, when the
+   * dialog actually opens.
+   */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // Focus the panel so the dialog owns the keyboard immediately.
+    // Focus the panel so the dialog owns the keyboard immediately. Runs on
+    // open only — see the note above.
     panelRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 

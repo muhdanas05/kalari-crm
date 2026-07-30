@@ -34,10 +34,18 @@ export function Sheet({ open, onClose, title, children }: Props) {
     return () => clearTimeout(t);
   }, [open]);
 
+  // Same reasoning as Modal: callers pass an inline arrow, so keeping onClose
+  // in the deps tore down and rebuilt this listener on every keystroke. No
+  // focus() here so it never caused the caret bug, but it is pure churn.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -46,7 +54,7 @@ export function Sheet({ open, onClose, title, children }: Props) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!render || typeof document === "undefined") return null;
 
