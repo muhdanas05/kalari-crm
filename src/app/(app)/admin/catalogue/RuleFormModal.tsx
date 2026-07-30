@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, Pencil } from "@/components/icons";
@@ -141,17 +142,24 @@ export function RuleFormModal({
           </div>
 
           <Field label="Charged">
-            <select
+            <Select
               value={form.qtyRule}
-              onChange={(e) =>
-                setForm({ ...form, qtyRule: e.target.value as RuleInput["qtyRule"] })
-              }
-              className={inputClass}
-            >
-              <option value="once">Once — a flat fee per invoice</option>
-              <option value="once_per_file">Once per booking — one file, any party size</option>
-              <option value="per_person">Per person — multiplied by travellers</option>
-            </select>
+              onChange={(v) => setForm({ ...form, qtyRule: v as RuleInput["qtyRule"] })}
+              ariaLabel="How this line is charged"
+              options={[
+                { value: "once", label: "Once", hint: "A flat fee per invoice" },
+                {
+                  value: "once_per_file",
+                  label: "Once per booking",
+                  hint: "One file, any party size",
+                },
+                {
+                  value: "per_person",
+                  label: "Per person",
+                  hint: "Multiplied by travellers",
+                },
+              ]}
+            />
           </Field>
 
           {error && (

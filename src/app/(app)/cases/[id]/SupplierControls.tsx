@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Mail, Check } from "@/components/icons";
@@ -41,19 +42,17 @@ export function SupplierControls({
 
   return (
     <div className="flex flex-col gap-3">
-      <select
+      <Select
         value={selected}
-        onChange={(e) => onPick(e.target.value)}
+        onChange={onPick}
         disabled={pending}
-        className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-      >
-        <option value="">No supplier</option>
-        {suppliers.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+        ariaLabel="Supplier"
+        options={[
+          // "No supplier" is a real state to set, not an absence of choice.
+          { value: "", label: "No supplier" },
+          ...suppliers.map((sup) => ({ value: sup.id, label: sup.name })),
+        ]}
+      />
 
       {current && (
         <ComposeButton

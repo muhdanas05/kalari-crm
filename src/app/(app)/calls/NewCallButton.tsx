@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, AlertTriangle } from "@/components/icons";
@@ -76,18 +77,16 @@ export function NewCallButton({
       >
         <div className="flex flex-col gap-4">
           <Field label="Customer">
-            <select
+            <Select
               value={customerId}
-              onChange={(e) => setCustomerId(e.target.value)}
-              className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-            >
-              <option value="">Choose…</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} — {c.phone}
-                </option>
-              ))}
-            </select>
+              onChange={setCustomerId}
+              ariaLabel="Customer"
+              options={customers.map((c) => ({
+                value: c.id,
+                label: c.name,
+                hint: c.phone,
+              }))}
+            />
           </Field>
 
           {/* This becomes context_line — the one line someone reads before
@@ -133,18 +132,15 @@ export function NewCallButton({
 
           {canAssign && (
             <Field label="Assign to">
-              <select
+              <Select
                 value={assignTo}
-                onChange={(e) => setAssignTo(e.target.value)}
-                className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-              >
-                <option value="">Me</option>
-                {people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setAssignTo}
+                ariaLabel="Assign to"
+                options={[
+                  { value: "", label: "Me" },
+                  ...people.map((p) => ({ value: p.id, label: p.name })),
+                ]}
+              />
             </Field>
           )}
 

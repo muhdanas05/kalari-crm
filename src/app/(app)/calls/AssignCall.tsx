@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { assignCall } from "./assign-actions";
 
@@ -43,19 +44,16 @@ export function AssignCall({
   };
 
   return (
-    <select
+    <Select
       value={value}
+      onChange={change}
       disabled={pending}
-      onChange={(e) => change(e.target.value)}
-      aria-label="Assign this call to"
-      className="h-7 shrink-0 rounded-md border border-line bg-surface px-2 text-[11px] font-medium text-ink-mid outline-none transition-colors hover:border-line-strong focus:border-accent disabled:opacity-60"
-    >
-      <option value="">Unassigned</option>
-      {people.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.name}
-        </option>
-      ))}
-    </select>
+      ariaLabel="Assign this call to"
+      className="w-[150px] shrink-0"
+      options={[
+        { value: "", label: "Unassigned" },
+        ...people.map((p) => ({ value: p.id, label: p.name })),
+      ]}
+    />
   );
 }

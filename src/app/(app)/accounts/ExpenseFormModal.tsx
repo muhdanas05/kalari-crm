@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Plus } from "@/components/icons";
@@ -140,32 +141,27 @@ export function ExpenseFormModal({
           </Field>
 
           <Field label="Method">
-            <select
+            <Select
               value={form.method}
-              onChange={(e) => setForm({ ...form, method: e.target.value as PaymentMethod })}
-              className={inputClass}
-            >
-              {METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {m[0].toUpperCase() + m.slice(1)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setForm({ ...form, method: v as PaymentMethod })}
+              ariaLabel="Payment method"
+              options={METHODS.map((m) => ({
+                value: m,
+                label: m[0].toUpperCase() + m.slice(1),
+              }))}
+            />
           </Field>
 
           <Field label="Supplier (optional)">
-            <select
+            <Select
               value={form.supplierId ?? ""}
-              onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-              className={inputClass}
-            >
-              <option value="">—</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setForm({ ...form, supplierId: v })}
+              ariaLabel="Supplier"
+              options={[
+                { value: "", label: "No supplier" },
+                ...suppliers.map((sup) => ({ value: sup.id, label: sup.name })),
+              ]}
+            />
           </Field>
 
           <Field label="Description" full>

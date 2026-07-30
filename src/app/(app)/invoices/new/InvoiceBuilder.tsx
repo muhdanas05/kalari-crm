@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, useId } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { Trash2, Plus, AlertTriangle, Undo2 } from "@/components/icons";
 import {
@@ -138,18 +139,16 @@ export function InvoiceBuilder({
 
           <div className="flex flex-col gap-4">
             <Field label="Customer">
-              <select
+              <Select
                 value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-              >
-                <option value="">Choose…</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} — {c.phone}
-                  </option>
-                ))}
-              </select>
+                onChange={setCustomerId}
+                ariaLabel="Customer"
+                options={customers.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                  hint: c.phone,
+                }))}
+              />
             </Field>
 
             {/*
@@ -172,18 +171,16 @@ export function InvoiceBuilder({
               </Field>
             ) : (
               <Field label="Service">
-                <select
+                <Select
                   value={serviceId}
-                  onChange={(e) => onService(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-                >
-                  <option value="">Choose…</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={onService}
+                  ariaLabel="Service"
+                  options={services.map((svc) => ({
+                    value: svc.id,
+                    label: svc.name,
+                    hint: svc.tracks_pipeline ? "Opens a case in the pipeline" : undefined,
+                  }))}
+                />
               </Field>
             )}
 

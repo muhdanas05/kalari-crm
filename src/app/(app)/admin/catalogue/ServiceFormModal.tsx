@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, Pencil } from "@/components/icons";
@@ -147,73 +148,62 @@ export function ServiceFormModal({ service }: { service?: Service }) {
           </Field>
 
           <Field label="Type of service">
-            <select
+            <Select
               value={form.family}
-              onChange={(e) => onFamily(e.target.value as ServiceInput["family"])}
-              className={inputClass}
-            >
-              {Object.entries(FAMILY_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => onFamily(v as ServiceInput["family"])}
+              ariaLabel="Type of service"
+              options={Object.entries(FAMILY_LABELS).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
           </Field>
 
           {dims.category && (
             <Field label="Programme">
-              <select
+              <Select
                 value={form.category ?? ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    category: (e.target.value || null) as ServiceInput["category"],
-                  })
+                onChange={(v) =>
+                  setForm({ ...form, category: (v || null) as ServiceInput["category"] })
                 }
-                className={inputClass}
-              >
-                <option value="">Choose…</option>
-                {dims.category.map((c) => (
-                  <option key={c} value={c}>
-                    {c === "haj" ? "Haj" : "Umrah"}
-                  </option>
-                ))}
-              </select>
+                ariaLabel="Programme"
+                options={(dims.category ?? []).map((c) => ({
+                  value: c,
+                  label: c === "haj" ? "Haj" : "Umrah",
+                }))}
+              />
             </Field>
           )}
 
           {dims.location && (
             <Field label="Where">
-              <select
+              <Select
                 value={form.location ?? ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    location: (e.target.value || null) as ServiceInput["location"],
-                  })
+                onChange={(v) =>
+                  setForm({ ...form, location: (v || null) as ServiceInput["location"] })
                 }
-                className={inputClass}
-              >
-                <option value="">Choose…</option>
-                <option value="domestic">Domestic</option>
-                <option value="international">International</option>
-              </select>
+                ariaLabel="Where"
+                options={[
+                  { value: "domestic", label: "Domestic" },
+                  { value: "international", label: "International" },
+                ]}
+              />
             </Field>
           )}
 
           {dims.type && (
             <Field label="New or renewal">
-              <select
+              <Select
                 value={form.type ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, type: (e.target.value || null) as ServiceInput["type"] })
+                onChange={(v) =>
+                  setForm({ ...form, type: (v || null) as ServiceInput["type"] })
                 }
-                className={inputClass}
-              >
-                <option value="">Choose…</option>
-                <option value="new">New</option>
-                <option value="renew">Renewal</option>
-              </select>
+                ariaLabel="New or renewal"
+                options={[
+                  { value: "new", label: "New" },
+                  { value: "renew", label: "Renewal" },
+                ]}
+              />
             </Field>
           )}
 

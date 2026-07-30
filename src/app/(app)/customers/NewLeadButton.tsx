@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, AlertTriangle } from "@/components/icons";
@@ -127,18 +128,17 @@ export function NewLeadButton({
           </Field>
           {services.length > 0 && (
             <Field label="Service interest (optional)">
-              <select
+              <Select
                 value={serviceId}
-                onChange={(e) => setServiceId(e.target.value)}
-                className={INPUT}
-              >
-                <option value="">Not sure yet</option>
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setServiceId}
+                ariaLabel="Service interest"
+                options={[
+                  // A real choice, not a placeholder: most walk-ins genuinely
+                  // haven't decided yet, and that is worth recording.
+                  { value: "", label: "Not sure yet" },
+                  ...services.map((svc) => ({ value: svc.id, label: svc.name })),
+                ]}
+              />
             </Field>
           )}
           <Field label="Note (optional)">
