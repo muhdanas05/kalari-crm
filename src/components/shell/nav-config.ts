@@ -12,6 +12,8 @@ import {
   Zap,
   History,
   Building2,
+  BookOpen,
+  ScrollText,
   type LucideIcon,
 } from "@/components/icons";
 import type { Role } from "@/lib/auth/session";
@@ -66,6 +68,8 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Invoices", href: "/invoices", icon: FileText },
       { label: "Payments", href: "/payments", icon: CreditCard },
+      // Admin-only: employees never see company money (locked decision).
+      { label: "Accounts", href: "/accounts", icon: BookOpen, roles: ["admin"] },
     ],
   },
   {
@@ -88,6 +92,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Service Catalogue", href: "/admin/catalogue", icon: Tags, roles: ["admin"] },
       { label: "Users", href: "/admin/users", icon: Users, roles: ["admin"] },
       { label: "Integrations", href: "/admin/integrations", icon: Plug, roles: ["admin"] },
+      { label: "Logs", href: "/admin/logs", icon: ScrollText, roles: ["admin"] },
     ],
   },
   {

@@ -10,6 +10,8 @@ import { formatPaise } from "@/lib/money";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ChevronRight, PhoneCall, Mail, AlertTriangle } from "@/components/icons";
 import { PortalLink } from "./PortalLink";
+import { getProfile } from "@/lib/auth/session";
+import { ArchiveEntityButton } from "../../ArchiveEntityButton";
 
 export const metadata: Metadata = { title: "Customer · Kalari" };
 
@@ -25,7 +27,10 @@ export default async function CustomerPage({
   if (!detail) notFound();
 
   const { customer, cases, invoices } = detail;
-  const activity = await getCustomerActivity(id);
+  const [activity, profile] = await Promise.all([
+    getCustomerActivity(id),
+    getProfile(),
+  ]);
 
   const outstanding = invoices
     .filter((i) => i.lifecycle === "issued")
@@ -35,6 +40,8 @@ export default async function CustomerPage({
     <div className="flex flex-col gap-6">
       <PageHead
         eyebrow="Customer"
+        backHref="/customers"
+        backLabel="All customers"
         title={customer.name}
         subtitle={customer.sponsor_company ?? undefined}
         actions={
@@ -54,6 +61,15 @@ export default async function CustomerPage({
                 <Mail size={14} />
                 Email
               </a>
+            )}
+            {/* Admin-only, and the RPC refuses while they still owe money. */}
+            {profile?.role === "admin" && (
+              <ArchiveEntityButton
+                kind="customer"
+                id={customer.id}
+                name={customer.name}
+                redirectTo="/customers"
+              />
             )}
           </div>
         }

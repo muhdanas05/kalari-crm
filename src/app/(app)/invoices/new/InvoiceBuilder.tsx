@@ -46,6 +46,10 @@ export function InvoiceBuilder({
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
+  // Custom mode: no catalogue service, free-text description, lines typed by
+  // hand. For the one-off job the rate card was never going to cover.
+  const [custom, setCustom] = useState(false);
+  const [customName, setCustomName] = useState("");
 
   const service = services.find((s) => s.id === serviceId) ?? null;
   // Show the traveller inputs whenever the service prices anything per person —
@@ -90,21 +94,29 @@ export function InvoiceBuilder({
 
   const submit = () => {
     if (!customerId) return setError("Choose a customer.");
-    if (!serviceId) return setError("Choose a service.");
+    if (custom) {
+      if (!customName.trim()) return setError("Describe what this invoice is for.");
+    } else if (!serviceId) {
+      return setError("Choose a service.");
+    }
     if (lines.length === 0) return setError("An invoice needs at least one line.");
+    if (lines.some((l) => !l.label.trim())) {
+      return setError("Every line needs a description.");
+    }
     setError(null);
 
     startTransition(async () => {
       const res = await createAndIssueInvoice({
         customerId,
         caseId: preselectedCaseId,
-        serviceId,
+        serviceId: custom ? null : serviceId,
+        customServiceName: custom ? customName.trim() : null,
         paxAdults: adults,
         paxChildren: children,
         lines: toDraftPayload(lines),
         amountNote: note || null,
         expectedTotalFils: totals.total_paise,
-        idempotencyKey: `${idemBase}:${customerId}:${serviceId}`,
+        idempotencyKey: `${idemBase}:${customerId}:${custom ? "custom" : serviceId}`,
       });
 
       if (!res.ok) {
@@ -142,23 +154,69 @@ export function InvoiceBuilder({
 
             {/*
               §3.4: pricing resolves from the 4 dimensions. The select is over
-              real services rather than a hardcoded list, so an eleventh service
+              real services rather than a hardcoded list, so a twelfth service
               is a row in the catalogue, not a code change.
+
+              Custom mode is the deliberate exception: a one-off job with no
+              catalogue entry. It skips the resolver entirely, so it also skips
+              the pipeline — there is no service, so there is no stage path.
             */}
-            <Field label="Service">
-              <select
-                value={serviceId}
-                onChange={(e) => onService(e.target.value)}
-                className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
-              >
-                <option value="">Choose…</option>
-                {services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            {custom ? (
+              <Field label="What is this invoice for?">
+                <input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. Document translation, courier charges…"
+                  className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none placeholder:text-ink-ghost focus:border-accent focus:bg-surface"
+                />
+              </Field>
+            ) : (
+              <Field label="Service">
+                <select
+                  value={serviceId}
+                  onChange={(e) => onService(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface"
+                >
+                  <option value="">Choose…</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                const next = !custom;
+                setCustom(next);
+                setError(null);
+                // Switching mode resets the lines: catalogue lines make no
+                // sense on a custom invoice, and vice versa.
+                if (next) {
+                  setServiceId("");
+                  setLines([
+                    {
+                      label: "",
+                      qty: 1,
+                      rate_paise: 0,
+                      catalogue_rate_paise: 0,
+                      gst_bp: 0,
+                      qty_rule: "once",
+                    },
+                  ]);
+                } else {
+                  setCustomName("");
+                  setLines([]);
+                }
+                setTouched(false);
+              }}
+              className="self-start text-[12px] font-semibold text-accent hover:underline"
+            >
+              {custom ? "← Use a catalogue service" : "Custom invoice instead →"}
+            </button>
 
             {/* Per-person services scale automatically by number of travellers. */}
             {hasPerPerson && (

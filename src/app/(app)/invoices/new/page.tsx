@@ -21,6 +21,8 @@ export default async function NewInvoicePage({
     <div className="flex flex-col gap-6">
       <PageHead
         eyebrow="Money"
+        backHref={sp.case ? `/cases/${sp.case}` : "/invoices"}
+        backLabel={sp.case ? "Back to case" : "All invoices"}
         title="New invoice"
         subtitle="Pick the service — the lines fill themselves in from your rate card."
       />

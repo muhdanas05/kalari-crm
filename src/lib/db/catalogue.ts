@@ -25,7 +25,7 @@ const getCatalogueCached = unstable_cache(
     const [{ data: services }, { data: rules }] = await Promise.all([
       supabase
         .from("services")
-        .select("id, name, family, category, location, type")
+        .select("id, name, family, category, location, type, tracks_pipeline")
         .eq("active", true)
         .is("archived_at", null)
         .order("name"),

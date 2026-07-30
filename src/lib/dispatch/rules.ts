@@ -100,11 +100,14 @@ export const DISPATCH_RULES: Record<EventType, DispatchRule> = {
     label: "Overdue — email and call",
   },
 
-  // Receipt is nice-to-have; the useful side effect (closing the chase) is done
-  // by a trigger, not here.
+  // The receipt IS the point for a remote payer: a bank transfer leaves them
+  // with no proof of payment until someone sends one. The trigger already
+  // closes the chase tasks and suppresses the reminders; this is the
+  // acknowledgement, with the receipt PDF attached. No call fallback — nobody
+  // needs a phone call to be told their own payment arrived.
   "payment.received": {
-    email: null,
-    label: "Payment received",
+    email: "payment.received",
+    label: "Payment received — receipt emailed",
   },
 
   // The highest-value rule in the product: every past customer becomes repeat

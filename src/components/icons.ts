@@ -14,6 +14,9 @@ export type { LucideIcon, LucideProps } from "lucide-react";
 
 export {
   AlertCircle,
+  SearchX,
+  Archive,
+  GitBranch,
   AlertTriangle,
   ArrowDown,
   ArrowDownLeft,
@@ -155,4 +158,6 @@ export {
   BadgeAlert,
   IdCard,
   ShieldOff,
+  BookOpen,
+  ScrollText,
 } from "lucide-react";

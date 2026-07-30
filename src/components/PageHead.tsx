@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowLeft } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -6,6 +8,14 @@ type Props = {
   subtitle?: string;
   actions?: React.ReactNode;
   className?: string;
+  /**
+   * Where "back" goes from a detail page. An explicit destination, not
+   * history.back(): someone who arrived from search, a portal link or a
+   * bookmark has no history to go back to, and the browser button already
+   * covers the case where they do.
+   */
+  backHref?: string;
+  backLabel?: string;
 };
 
 /**
@@ -20,6 +30,8 @@ export function PageHead({
   subtitle,
   actions,
   className,
+  backHref,
+  backLabel,
 }: Props) {
   return (
     <div
@@ -29,6 +41,15 @@ export function PageHead({
       )}
     >
       <div className="flex max-w-2xl flex-col">
+        {backHref && (
+          <Link
+            href={backHref}
+            className="mb-2 -ml-1 inline-flex w-fit items-center gap-1.5 rounded-lg px-1 py-0.5 text-[12px] font-semibold text-ink-mid transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mist"
+          >
+            <ArrowLeft size={14} />
+            {backLabel ?? "Back"}
+          </Link>
+        )}
         <p className="mb-3 text-[11px] font-bold uppercase tracking-[2px] text-gold-deep">
           {eyebrow}
         </p>

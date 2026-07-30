@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 
@@ -44,6 +44,7 @@ export async function saveSupplier(input: SupplierInput): Promise<SaveSupplierRe
 
   if (error) return { ok: false, error: error.message };
 
+  revalidateTag("suppliers");
   revalidatePath("/suppliers");
   if (input.id) revalidatePath(`/suppliers/${input.id}`);
   return { ok: true, id: data.id };
@@ -57,6 +58,7 @@ export async function archiveSupplier(id: string): Promise<{ ok: true } | { ok: 
     .update({ archived_at: new Date().toISOString() })
     .eq("id", id);
   if (error) return { ok: false, error: error.message };
+  revalidateTag("suppliers");
   revalidatePath("/suppliers");
   revalidatePath(`/suppliers/${id}`);
   return { ok: true };

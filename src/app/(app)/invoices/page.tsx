@@ -87,10 +87,13 @@ export default async function InvoicesPage({
       ) : (
         <ul className="overflow-hidden rounded-xl border border-line bg-surface">
           {invoices.map((i) => (
-            <li key={i.id} className="border-b border-line last:border-0">
+            <li
+              key={i.id}
+              className="relative flex items-center border-b border-line last:border-0"
+            >
               <Link
                 href={`/invoices/${i.id}`}
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
+                className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block font-mono text-[13px] font-semibold text-ink">
@@ -127,6 +130,19 @@ export default async function InvoicesPage({
 
                 <ChevronRight size={15} className="shrink-0 text-ink-ghost" />
               </Link>
+
+              {/* Sibling of the row link, not nested — anchors can't nest. */}
+              {i.lifecycle !== "void" && (
+                <a
+                  href={`/invoices/${i.id}/pdf`}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={`Open PDF for invoice ${i.number ?? ""}`}
+                  className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-ink-faint transition-colors hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mist"
+                >
+                  <FileText size={14} />
+                </a>
+              )}
             </li>
           ))}
         </ul>

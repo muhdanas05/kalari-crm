@@ -10,6 +10,8 @@ import {
   Tags,
   Plug,
   Building2,
+  BookOpen,
+  ScrollText,
   type LucideIcon,
 } from "@/components/icons";
 import type { Role } from "@/lib/auth/session";
@@ -77,6 +79,9 @@ export function moreSectionsFor(role: Role): MobileNavSection[] {
       items: [
         { label: "Invoices", href: "/invoices", icon: FileText },
         { label: "Payments", href: "/payments", icon: CreditCard },
+        ...(role === "admin"
+          ? [{ label: "Accounts", href: "/accounts", icon: BookOpen }]
+          : []),
       ],
     },
     {
@@ -88,6 +93,7 @@ export function moreSectionsFor(role: Role): MobileNavSection[] {
               { label: "Catalogue", href: "/admin/catalogue", icon: Tags },
               { label: "Users", href: "/admin/users", icon: Users },
               { label: "Integrations", href: "/admin/integrations", icon: Plug },
+              { label: "Logs", href: "/admin/logs", icon: ScrollText },
             ]
           : [],
     },

@@ -226,6 +226,8 @@ async function tryQueueEmail(
     return "sandboxed";
   }
 
+  const attachments = await attachmentsFor(supabase, event);
+
   const { error } = await supabase.from("email_queue").insert({
     event_id: event.id,
     customer_id: customer.id,
@@ -235,12 +237,81 @@ async function tryQueueEmail(
     to_email: customer.email,
     subject,
     body,
+    attachments,
     dedupe_key: dedupe,
   });
 
   // 23505 = we already queued this exact event. Not an error.
   if (error && error.code !== "23505") throw new Error(error.message);
   return error ? "skipped" : "queued";
+}
+
+/**
+ * The receipt PDF that rides along with a payment acknowledgement.
+ *
+ * Rendered here rather than fetched: the receipt route is user-scoped (RLS
+ * decides who may read a payment), and the dispatcher runs from cron with no
+ * user at all. Same renderer, same numbers, admin-scoped read.
+ *
+ * Failure is non-fatal on purpose — a Storage or jsPDF hiccup must never stop
+ * the customer being told their money arrived. They get the email without the
+ * attachment, and the receipt is still downloadable in the app.
+ */
+async function attachmentsFor(
+  supabase: ReturnType<typeof createAdminClient>,
+  event: EventRow,
+): Promise<{ filename: string; content: string; contentType: string }[]> {
+  if (event.type !== "payment.received" || event.entity !== "payment") return [];
+
+  try {
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("number, paid_on, amount_paise, method, reference, invoice_id, voided_at")
+      .eq("id", event.entity_id)
+      .maybeSingle();
+
+    // A voided payment gets no receipt — handing out proof of a reversed
+    // payment is worse than sending nothing.
+    if (!payment || payment.voided_at || !payment.number) return [];
+
+    const { data: invoice } = await supabase
+      .from("invoices_v")
+      .select("number, outstanding_paise, customer_id")
+      .eq("id", payment.invoice_id)
+      .maybeSingle();
+    if (!invoice) return [];
+
+    const { data: customer } = invoice.customer_id
+      ? await supabase
+          .from("customers")
+          .select("name")
+          .eq("id", invoice.customer_id)
+          .maybeSingle()
+      : { data: null };
+
+    const { renderReceiptPdf } = await import("@/lib/pdf/receipt");
+    const buffer = await renderReceiptPdf({
+      number: payment.number,
+      paidOn: payment.paid_on,
+      amountPaise: payment.amount_paise,
+      method: payment.method,
+      reference: payment.reference,
+      customerName: customer?.name ?? "—",
+      invoiceNumber: invoice.number ?? "—",
+      balanceAfterPaise: invoice.outstanding_paise ?? 0,
+    });
+
+    return [
+      {
+        filename: `${payment.number}.pdf`,
+        content: Buffer.from(buffer).toString("base64"),
+        contentType: "application/pdf",
+      },
+    ];
+  } catch (err) {
+    console.error("[dispatch] receipt attachment failed:", err);
+    return [];
+  }
 }
 
 async function raiseCallTask(
@@ -380,6 +451,36 @@ async function render(
       tokens.invoice_outstanding = formatPaiseBare(inv.outstanding_paise ?? 0);
       tokens.due_date = formatDate(inv.due_date);
       tokens.days_overdue = String(inv.days_overdue ?? 0);
+    }
+  }
+
+  // A payment event points at the PAYMENT, so the invoice tokens above never
+  // fire for it. Fetch both: the receipt names the payment, the balance names
+  // the invoice, and the customer wants to read both in one line.
+  if (event.entity === "payment") {
+    const { data: pay } = await supabase
+      .from("payments")
+      .select("amount_paise, number, paid_on, method, invoice_id")
+      .eq("id", event.entity_id)
+      .maybeSingle();
+    if (pay) {
+      tokens.payment_amount = formatPaiseBare(pay.amount_paise ?? 0);
+      tokens.receipt_number = pay.number ?? "";
+      tokens.payment_date = formatDate(pay.paid_on);
+      tokens.payment_method = String(pay.method ?? "");
+
+      if (pay.invoice_id) {
+        const { data: inv } = await supabase
+          .from("invoices_v")
+          .select("number, total_paise, outstanding_paise")
+          .eq("id", pay.invoice_id)
+          .maybeSingle();
+        if (inv) {
+          tokens.invoice_number = inv.number ?? "";
+          tokens.invoice_total = formatPaiseBare(inv.total_paise ?? 0);
+          tokens.invoice_outstanding = formatPaiseBare(inv.outstanding_paise ?? 0);
+        }
+      }
     }
   }
 

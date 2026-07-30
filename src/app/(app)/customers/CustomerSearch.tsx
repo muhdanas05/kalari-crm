@@ -8,7 +8,13 @@ import { Search, Loader2 } from "@/components/icons";
  * Success criterion §8.1: any customer findable in under 5 seconds by name or
  * phone. Debounced URL state, so a search is shareable and survives a reload.
  */
-export function CustomerSearch({ initial }: { initial: string }) {
+export function CustomerSearch({
+  initial,
+  category,
+}: {
+  initial: string;
+  category?: string;
+}) {
   const router = useRouter();
   const [q, setQ] = useState(initial);
   const [pending, startTransition] = useTransition();
@@ -16,14 +22,16 @@ export function CustomerSearch({ initial }: { initial: string }) {
   useEffect(() => {
     if (q === initial) return;
     const t = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (category) params.set("category", category);
+      const s = params.toString();
       startTransition(() => {
-        router.replace(q ? `/customers?q=${encodeURIComponent(q)}` : "/customers", {
-          scroll: false,
-        });
+        router.replace(s ? `/customers?${s}` : "/customers", { scroll: false });
       });
     }, 220);
     return () => clearTimeout(t);
-  }, [q, initial, router]);
+  }, [q, initial, category, router]);
 
   return (
     <div className="flex h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-line bg-surface px-3.5 focus-within:border-accent">

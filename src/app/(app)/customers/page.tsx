@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
-import { listCustomers } from "@/lib/db/customers";
+import { Tag } from "@/components/ui/Tag";
+import { listCustomers, listCustomerCategories } from "@/lib/db/customers";
+import { getCatalogue } from "@/lib/db/catalogue";
 import { getProfile } from "@/lib/auth/session";
 import { formatDate } from "@/lib/dates";
 import { ChevronRight, Mail, PhoneOff } from "@/components/icons";
 import { CustomerSearch } from "./CustomerSearch";
+import { CustomerCategoryFilter } from "./CustomerCategoryFilter";
 import { NewLeadButton } from "./NewLeadButton";
 
 export const metadata: Metadata = { title: "Customers · Kalari" };
@@ -13,10 +16,15 @@ export const metadata: Metadata = { title: "Customers · Kalari" };
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; category?: string }>;
 }) {
-  const { q } = await searchParams;
-  const [profile, customers] = await Promise.all([getProfile(), listCustomers({ q })]);
+  const { q, category } = await searchParams;
+  const [profile, customers, categories, catalogue] = await Promise.all([
+    getProfile(),
+    listCustomers({ q, category }),
+    listCustomerCategories(),
+    getCatalogue(),
+  ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -28,10 +36,15 @@ export default async function CustomersPage({
             ? "Every customer, every service history."
             : "The customers assigned to you."
         }
-        actions={<NewLeadButton />}
+        actions={<NewLeadButton services={catalogue.services} />}
       />
 
-      <CustomerSearch initial={q ?? ""} />
+      <CustomerSearch initial={q ?? ""} category={category} />
+      <CustomerCategoryFilter
+        categories={categories}
+        active={category ?? "all"}
+        q={q}
+      />
 
       {customers.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line py-12 text-center text-[13px] font-medium text-ink-faint">
@@ -71,6 +84,12 @@ export default async function CustomersPage({
                     )}
                   </span>
                 </div>
+
+                {c.category && (
+                  <Tag tone="accent" className="hidden shrink-0 sm:inline-flex">
+                    {c.category}
+                  </Tag>
+                )}
 
                 <span className="hidden shrink-0 text-[11px] font-medium text-ink-ghost sm:block">
                   {formatDate(c.created_at)}

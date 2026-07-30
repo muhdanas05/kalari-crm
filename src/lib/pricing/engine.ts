@@ -26,6 +26,12 @@ export type Service = {
   category: ServiceCategory | null;
   location: ServiceLocation | null;
   type: ServiceType | null;
+  /**
+   * Whether invoicing this service opens a tracked case (0028). Optional
+   * because it is irrelevant to PRICING — the resolver never reads it, and the
+   * golden-total fixtures predate it.
+   */
+  tracks_pipeline?: boolean;
 };
 
 export type Rule = {

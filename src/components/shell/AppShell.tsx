@@ -98,9 +98,11 @@ const WIDE_ROUTES = [
   "/payments",
   "/calls",
   "/suppliers",
+  "/accounts",
   "/admin/calls",
   "/admin/catalogue",
   "/admin/users",
+  "/admin/logs",
 ];
 
 function isWide(pathname: string) {

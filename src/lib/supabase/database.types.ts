@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activity_log: {
@@ -492,6 +467,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           assigned_user_id: string | null
+          category: string | null
           created_at: string
           created_by: string | null
           email: string | null
@@ -525,6 +501,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           assigned_user_id?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -558,6 +535,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           assigned_user_id?: string | null
+          category?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -1034,6 +1012,66 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount_paise: number
+          archived_at: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string | null
+          spent_on: string
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paise: number
+          archived_at?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          method: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          spent_on?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paise?: number
+          archived_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          spent_on?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_requests: {
         Row: {
           id: string
@@ -1078,6 +1116,7 @@ export type Database = {
           case_id: string | null
           created_at: string
           created_by: string
+          custom_service_name: string | null
           customer_id: string
           id: string
           issued_invoice_id: string | null
@@ -1092,6 +1131,7 @@ export type Database = {
           case_id?: string | null
           created_at?: string
           created_by: string
+          custom_service_name?: string | null
           customer_id: string
           id?: string
           issued_invoice_id?: string | null
@@ -1106,6 +1146,7 @@ export type Database = {
           case_id?: string | null
           created_at?: string
           created_by?: string
+          custom_service_name?: string | null
           customer_id?: string
           id?: string
           issued_invoice_id?: string | null
@@ -1597,6 +1638,7 @@ export type Database = {
           id: string
           location: Database["public"]["Enums"]["service_location"] | null
           name: string
+          tracks_pipeline: boolean
           type: Database["public"]["Enums"]["service_type"] | null
           updated_at: string
         }
@@ -1609,6 +1651,7 @@ export type Database = {
           id?: string
           location?: Database["public"]["Enums"]["service_location"] | null
           name: string
+          tracks_pipeline?: boolean
           type?: Database["public"]["Enums"]["service_type"] | null
           updated_at?: string
         }
@@ -1621,6 +1664,7 @@ export type Database = {
           id?: string
           location?: Database["public"]["Enums"]["service_location"] | null
           name?: string
+          tracks_pipeline?: boolean
           type?: Database["public"]["Enums"]["service_type"] | null
           updated_at?: string
         }
@@ -2125,6 +2169,9 @@ export type Database = {
         }
         Returns: undefined
       }
+      archive_case: { Args: { p_case_id: string }; Returns: undefined }
+      archive_customer: { Args: { p_customer_id: string }; Returns: undefined }
+      archive_supplier: { Args: { p_supplier_id: string }; Returns: undefined }
       assign_call_task: {
         Args: { p_task_id: string; p_user_id: string }
         Returns: undefined
@@ -2349,6 +2396,8 @@ export type Database = {
         | "visa"
         | "passport"
         | "hotel"
+        | "attestation"
+        | "other"
       service_location: "domestic" | "international"
       service_type: "new" | "renew"
       suppression_reason: "hard_bounce" | "complaint" | "manual" | "unsubscribe"
@@ -2478,9 +2527,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       actor_kind: ["user", "service", "system", "portal"],
@@ -2544,6 +2590,8 @@ export const Constants = {
         "visa",
         "passport",
         "hotel",
+        "attestation",
+        "other",
       ],
       service_location: ["domestic", "international"],
       service_type: ["new", "renew"],

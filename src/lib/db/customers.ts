@@ -7,14 +7,20 @@ export type Customer = Database["public"]["Tables"]["customers"]["Row"];
  * Customers list. RLS scopes it: an employee sees only customers assigned to
  * them (§3.18), so there is deliberately no role branch here.
  */
-export async function listCustomers(opts: { q?: string; limit?: number } = {}) {
+export async function listCustomers(
+  opts: { q?: string; category?: string; limit?: number } = {},
+) {
   const supabase = await createClient();
   let query = supabase
     .from("customers")
-    .select("id, name, phone, email, nationality, source, assigned_user_id, created_at")
+    .select(
+      "id, name, phone, email, category, nationality, source, assigned_user_id, created_at",
+    )
     .is("archived_at", null)
     .order("created_at", { ascending: false })
     .limit(opts.limit ?? 100);
+
+  if (opts.category) query = query.eq("category", opts.category);
 
   if (opts.q && opts.q.trim().length >= 2) {
     const q = opts.q.trim().replace(/[%_,()]/g, "");
@@ -28,6 +34,27 @@ export async function listCustomers(opts: { q?: string; limit?: number } = {}) {
   const { data, error } = await query;
   if (error) throw new Error(`Failed to load customers: ${error.message}`);
   return data ?? [];
+}
+
+/**
+ * The categories actually in use, for the filter pills. Free-text column, so
+ * there is no lookup table to read — dedupe the values instead.
+ *
+ * ponytail: scans the newest 1000 rows and dedupes in JS. A category used only
+ * on older rows would drop off the pill list (the ?category= URL still works).
+ * If that bites, add a `distinct` RPC or a categories table.
+ */
+export async function listCustomerCategories(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("customers")
+    .select("category")
+    .is("archived_at", null)
+    .not("category", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1000);
+
+  return [...new Set((data ?? []).map((r) => r.category!.trim()).filter(Boolean))].sort();
 }
 
 /** One customer with everything the profile page shows. */

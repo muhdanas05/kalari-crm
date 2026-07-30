@@ -6,7 +6,10 @@ import { getCatalogue, rulesForService } from "@/lib/db/catalogue";
 import { computeTotals } from "@/lib/money";
 import { buildLines } from "@/lib/pricing/engine";
 import { formatPaise, formatPaiseBare } from "@/lib/money";
-import { AlertTriangle } from "@/components/icons";
+import { AlertTriangle, GitBranch } from "@/components/icons";
+import { ServiceFormModal } from "./ServiceFormModal";
+import { RuleFormModal } from "./RuleFormModal";
+import { ArchiveButton } from "./ArchiveButton";
 
 export const metadata: Metadata = { title: "Service catalogue · Kalari" };
 
@@ -26,6 +29,7 @@ export default async function CataloguePage() {
         eyebrow="Admin"
         title="Service catalogue"
         subtitle="Your rate card. Every invoice is built from these lines."
+        actions={<ServiceFormModal />}
       />
 
       {/*
@@ -84,7 +88,20 @@ export default async function CataloguePage() {
               className="overflow-hidden rounded-xl border border-line bg-surface"
             >
               <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
-                <h2 className="text-[14px] font-bold text-ink">{s.name}</h2>
+                <h2 className="flex items-center gap-2 text-[14px] font-bold text-ink">
+                  {s.name}
+                  {/*
+                    Says at a glance whether selling this opens a case. Without
+                    it the two kinds of service look identical on the rate card
+                    and behave completely differently at the till.
+                  */}
+                  {s.tracks_pipeline && (
+                    <Tag tone="accent">
+                      <GitBranch size={11} className="mr-1 inline" />
+                      Pipeline
+                    </Tag>
+                  )}
+                </h2>
                 <span className="flex items-center gap-2">
                   {scales && <Tag tone="accent">Scales by people</Tag>}
                   <span className="font-mono text-[13px] font-extrabold text-ink">
@@ -95,6 +112,8 @@ export default async function CataloguePage() {
                       for 1 person
                     </span>
                   )}
+                  <ServiceFormModal service={s} />
+                  <ArchiveButton kind="service" id={s.id} name={s.name} />
                 </span>
               </header>
 
@@ -111,21 +130,41 @@ export default async function CataloguePage() {
                       <td className="py-2 text-right text-[11px] font-medium text-ink-faint">
                         {QTY_LABEL[r.qty_rule] ?? r.qty_rule}
                       </td>
-                      <td className="w-28 py-2 pr-5 text-right font-mono text-[12.5px] font-semibold text-ink">
+                      <td className="w-28 py-2 text-right font-mono text-[12.5px] font-semibold text-ink">
                         {formatPaiseBare(r.rate_paise)}
+                      </td>
+                      <td className="w-px whitespace-nowrap py-2 pr-3 text-right">
+                        <span className="flex items-center justify-end gap-0.5">
+                          <RuleFormModal
+                            serviceId={s.id}
+                            rule={r}
+                            nextOrder={r.sort_order}
+                          />
+                          <ArchiveButton kind="rule" id={r.id} name={r.label} />
+                        </span>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              <div className="border-t border-line px-3 py-2">
+                <RuleFormModal
+                  serviceId={s.id}
+                  nextOrder={
+                    svcRules.reduce((max, r) => Math.max(max, r.sort_order), 0) + 1
+                  }
+                />
+              </div>
             </section>
           );
         })}
       </div>
 
       <p className="text-[11.5px] font-medium text-ink-faint">
-        Editing rates in-app is not built yet — changes go through a migration so
-        every rate change is reviewable and reversible. Ask 7Gence to change a rate.
+        Rate changes take effect on new invoices only. Archived services and
+        lines stay on the invoices that already carry them — an issued invoice
+        keeps its own snapshot of every rate, permanently.
       </p>
     </div>
   );

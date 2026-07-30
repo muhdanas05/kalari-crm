@@ -8,7 +8,18 @@ import { useToast } from "@/components/ui/Toast";
 import { Plus, AlertTriangle } from "@/components/icons";
 import { createLead } from "./new-lead-actions";
 
-export function NewLeadButton() {
+// Free-text by design (§ the column is text, not an enum) — the datalist is a
+// shortcut, not a constraint. Shafeek can type "Haj Group 2027" if he wants.
+const CATEGORIES = ["Regular", "Corporate", "Agent", "Haj Group", "Walk-in", "Online"];
+
+const INPUT =
+  "h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] font-medium text-ink outline-none focus:border-accent focus:bg-surface";
+
+export function NewLeadButton({
+  services = [],
+}: {
+  services?: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -16,6 +27,9 @@ export function NewLeadButton() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [category, setCategory] = useState("");
+  const [serviceId, setServiceId] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const submit = () => {
@@ -25,7 +39,7 @@ export function NewLeadButton() {
     }
     setError(null);
     start(async () => {
-      const res = await createLead({ name, phone, email });
+      const res = await createLead({ name, phone, email, category, serviceId, message });
       if (!res.ok) {
         setError(res.error);
         return;
@@ -40,6 +54,9 @@ export function NewLeadButton() {
       setName("");
       setPhone("");
       setEmail("");
+      setCategory("");
+      setServiceId("");
+      setMessage("");
       router.push(`/customers/${res.customerId}`);
     });
   };
@@ -92,6 +109,45 @@ export function NewLeadButton() {
               type="email"
               placeholder="name@example.ae"
               className="h-10 w-full rounded-lg border border-line bg-paper px-3 text-[13px] text-ink outline-none placeholder:text-ink-ghost focus:border-accent focus:bg-surface"
+            />
+          </Field>
+          <Field label="Category (optional)">
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              list="lead-categories"
+              placeholder="Regular"
+              className={INPUT + " placeholder:text-ink-ghost"}
+            />
+            <datalist id="lead-categories">
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </Field>
+          {services.length > 0 && (
+            <Field label="Service interest (optional)">
+              <select
+                value={serviceId}
+                onChange={(e) => setServiceId(e.target.value)}
+                className={INPUT}
+              >
+                <option value="">Not sure yet</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <Field label="Note (optional)">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
+              placeholder="What did they ask for?"
+              className="w-full resize-y rounded-lg border border-line bg-paper px-3 py-2 text-[13px] font-medium leading-relaxed text-ink outline-none placeholder:text-ink-ghost focus:border-accent focus:bg-surface"
             />
           </Field>
           <p className="text-[11px] font-medium text-ink-faint">

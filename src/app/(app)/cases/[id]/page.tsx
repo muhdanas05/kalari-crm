@@ -11,6 +11,8 @@ import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { AlertTriangle, PhoneCall, UserSquare2, Truck } from "@/components/icons";
 import { SupplierControls } from "./SupplierControls";
+import { ArchiveEntityButton } from "../../ArchiveEntityButton";
+import { FileText } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Case · Kalari" };
 
@@ -34,18 +36,42 @@ export default async function CasePage({
     <div className="flex flex-col gap-6">
       <PageHead
         eyebrow={c.pipeline_name ?? "Case"}
+        backHref="/pipeline"
+        backLabel="Pipeline"
         title={c.customer_name ?? "Case"}
         subtitle={c.service_name ?? "No service set"}
         actions={
-          c.customer_phone ? (
-            <a
-              href={`tel:${c.customer_phone.replace(/\s/g, "")}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-3.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-accent-deep"
-            >
-              <PhoneCall size={14} />
-              Call
-            </a>
-          ) : undefined
+          <div className="flex items-center gap-2">
+            {c.customer_phone && (
+              <a
+                href={`tel:${c.customer_phone.replace(/\s/g, "")}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-3.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-accent-deep"
+              >
+                <PhoneCall size={14} />
+                Call
+              </a>
+            )}
+            {/*
+              Invoice FROM the case, carrying both ids — this is what keeps a
+              case and its money linked. Before it existed nothing ever passed
+              ?case=, so every invoice raised in the app was orphaned.
+            */}
+            {c.customer_id && (
+              <Link
+                href={`/invoices/new?customer=${c.customer_id}&case=${c.id}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-line-strong"
+              >
+                <FileText size={14} />
+                New invoice
+              </Link>
+            )}
+            <ArchiveEntityButton
+              kind="case"
+              id={c.id!}
+              name={`${c.customer_name ?? "This case"} — ${c.service_name ?? "case"}`}
+              redirectTo="/pipeline"
+            />
+          </div>
         }
       />
 

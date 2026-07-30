@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/dates";
 import { Lock, UserSquare2, FileText } from "@/components/icons";
 import { RecordPaymentButton } from "./RecordPaymentButton";
 import { EmailInvoiceButton } from "./EmailInvoiceButton";
+import { VoidButton } from "./VoidButton";
 
 export const metadata: Metadata = { title: "Invoice · Kalari" };
 
@@ -30,6 +31,8 @@ export default async function InvoicePage({
     <div className="flex flex-col gap-6">
       <PageHead
         eyebrow={invoice.doc_type === "credit_note" ? "Credit note" : "Invoice"}
+        backHref="/invoices"
+        backLabel="All invoices"
         title={invoice.number ?? "—"}
         subtitle={invoice.service_name ?? undefined}
         actions={
@@ -50,6 +53,14 @@ export default async function InvoicePage({
               <RecordPaymentButton
                 invoiceId={invoice.id!}
                 outstandingFils={outstanding}
+              />
+            )}
+            {/* Void is admin-only, and the RPC refuses once money is against it. */}
+            {!voided && profile?.role === "admin" && (
+              <VoidButton
+                kind="invoice"
+                invoiceId={invoice.id!}
+                label={invoice.number ?? "This invoice"}
               />
             )}
           </div>
@@ -275,15 +286,25 @@ export default async function InvoicePage({
                     {p.voided_at ? (
                       <Tag tone="neutral">Void</Tag>
                     ) : (
-                      p.number && (
-                        <Link
-                          href={`/payments/${p.id}/receipt`}
-                          target="_blank"
-                          className="shrink-0 text-[11.5px] font-semibold text-accent hover:underline"
-                        >
-                          Receipt
-                        </Link>
-                      )
+                      <span className="flex shrink-0 items-center gap-2.5">
+                        {p.number && (
+                          <Link
+                            href={`/payments/${p.id}/receipt`}
+                            target="_blank"
+                            className="text-[11.5px] font-semibold text-accent hover:underline"
+                          >
+                            Receipt
+                          </Link>
+                        )}
+                        {profile?.role === "admin" && (
+                          <VoidButton
+                            kind="payment"
+                            paymentId={p.id}
+                            invoiceId={invoice.id!}
+                            label={`${p.number ?? "This payment"}`}
+                          />
+                        )}
+                      </span>
                     )}
                   </li>
                 ))}

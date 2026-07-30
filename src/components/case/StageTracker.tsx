@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { moveCaseStage } from "@/app/(app)/pipeline/actions";
 import { Check, Loader2 } from "@/components/icons";
@@ -29,13 +29,28 @@ export function StageTracker({ caseId, path, currentStageId }: Props) {
   const toast = useToast();
   const [pending, startTransition] = useTransition();
 
-  const currentIdx = path.findIndex((s) => s.id === currentStageId);
+  /**
+   * Move the marker the instant it's clicked, then let the server confirm.
+   *
+   * Safe to be optimistic here precisely because the database is the one
+   * enforcing the path (tg_case_stage_guard raises 23514 on an off-path move):
+   * if the server disagrees, React discards this value when the transition
+   * ends and the real stage snaps back — with the guard's own message in a
+   * toast. Nothing is lost, and the common case stops waiting on a round trip.
+   *
+   * Deliberately NOT applied to money (issuing, payments): those must never
+   * appear to have happened before the ledger says so.
+   */
+  const [optimisticStageId, setOptimisticStageId] = useOptimistic(currentStageId);
+
+  const currentIdx = path.findIndex((s) => s.id === optimisticStageId);
   const pct =
     path.length > 1 ? (Math.max(currentIdx, 0) / (path.length - 1)) * 100 : 0;
 
   const go = (stageId: string) => {
-    if (stageId === currentStageId || pending) return;
+    if (stageId === optimisticStageId || pending) return;
     startTransition(async () => {
+      setOptimisticStageId(stageId);
       const res = await moveCaseStage(caseId, stageId);
       if (!res.ok) toast(res.error, "error");
       else toast("Stage updated.", "ok");
@@ -68,7 +83,7 @@ export function StageTracker({ caseId, path, currentStageId }: Props) {
       <ol className="flex snap-x gap-2 overflow-x-auto pb-1">
         {path.map((stage, i) => {
           const done = currentIdx > i;
-          const active = stage.id === currentStageId;
+          const active = stage.id === optimisticStageId;
           return (
             <li key={stage.id} className="snap-start">
               <button

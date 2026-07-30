@@ -9,6 +9,7 @@ import { getProfile } from "@/lib/auth/session";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ChevronRight, Mail, Send } from "@/components/icons";
 import { SupplierFormModal } from "../SupplierFormModal";
+import { ArchiveEntityButton } from "../../ArchiveEntityButton";
 
 export const metadata: Metadata = { title: "Supplier · Kalari" };
 
@@ -26,9 +27,23 @@ export default async function SupplierPage({
     <div className="flex flex-col gap-6">
       <PageHead
         eyebrow="Supplier"
+        backHref="/suppliers"
+        backLabel="All suppliers"
         title={s.name}
         subtitle={s.supplies ?? undefined}
-        actions={profile?.role === "admin" ? <SupplierFormModal supplier={s} /> : undefined}
+        actions={
+          profile?.role === "admin" ? (
+            <div className="flex items-center gap-2">
+              <SupplierFormModal supplier={s} />
+              <ArchiveEntityButton
+                kind="supplier"
+                id={s.id}
+                name={s.name}
+                redirectTo="/suppliers"
+              />
+            </div>
+          ) : undefined
+        }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

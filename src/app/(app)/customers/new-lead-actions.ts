@@ -22,6 +22,11 @@ export async function createLead(input: {
   phone: string;
   email?: string;
   source?: string;
+  /** Free-text segment (Regular / Corporate / Agent / …). Set after the RPC. */
+  category?: string;
+  /** Service the lead asked about. create_lead takes a uuid (p_service_id). */
+  serviceId?: string;
+  message?: string;
 }): Promise<NewLeadResult> {
   await requireProfile();
 
@@ -35,6 +40,8 @@ export async function createLead(input: {
     p_phone: input.phone.trim(),
     p_email: input.email?.trim() || undefined,
     p_source: input.source?.trim() || "walk-in",
+    p_service_id: input.serviceId || undefined,
+    p_message: input.message?.trim() || undefined,
   });
 
   if (error) return { ok: false, error: error.message };
@@ -42,7 +49,22 @@ export async function createLead(input: {
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.customer_id) return { ok: false, error: "Could not create the lead." };
 
+  // create_lead has no category param, and category is a plain column with an
+  // update grant — so it's a follow-up write. A dedup hit (existing customer)
+  // gets its category refreshed too, which is the intended behaviour: the
+  // latest intake wins.
+  const category = input.category?.trim();
+  if (category) {
+    const { error: catError } = await supabase
+      .from("customers")
+      .update({ category })
+      .eq("id", row.customer_id);
+    // The lead exists either way — a failed tag is not a failed lead.
+    if (catError) console.error("createLead: category update failed", catError);
+  }
+
   revalidatePath("/customers");
+  revalidatePath(`/customers/${row.customer_id}`);
   revalidatePath("/pipeline");
   revalidatePath("/dashboard");
   return { ok: true, customerId: row.customer_id, isNew: row.is_new_customer };
