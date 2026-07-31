@@ -78,6 +78,25 @@ export async function getBoardCases(pipelineKey: PipelineKey) {
   return data ?? [];
 }
 
+/**
+ * Board rows for one SERVICE, across whichever pipeline it's actually on.
+ * Same view, same guarantees as getBoardCases — just filtered narrower, since
+ * a service's own stage_applicability path (not the whole pipeline's stage
+ * union) is what the board's columns are built from.
+ */
+export async function getBoardCasesForService(serviceId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("cases_board_v")
+    .select("*")
+    .eq("service_id", serviceId)
+    .order("stage_sort")
+    .order("opened_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to load board: ${error.message}`);
+  return data ?? [];
+}
+
 /** Stuck cases across every pipeline — is_stuck is computed by the view. */
 export async function getStuckCases(limit = 10) {
   const supabase = await createClient();

@@ -1,16 +1,27 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { Select } from "@/components/ui/Select";
 import { Kanban, List } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
+export const LEADS_VALUE = "leads";
+
 type Props = {
-  pipelines: { key: string; name: string; count?: number }[];
-  active: string;
+  services: { id: string; name: string }[];
+  selected: string;
   view: "board" | "list" | null;
 };
 
-export function PipelineTabs({ pipelines, active, view }: Props) {
+/**
+ * One dropdown, not a tab per pipeline: pick "New enquiries" (Sales-stage
+ * leads, no service yet) or any service that tracks a pipeline, and the board
+ * below renders THAT selection's own stage path — the one set up in the
+ * Pipeline Stages editor — with only its own cases in each column. Replaces
+ * the old sales/processing/renewal tab switcher, which mixed every service's
+ * stages into one flat column list on the Processing tab.
+ */
+export function PipelineSelector({ services, selected, view }: Props) {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -22,31 +33,16 @@ export function PipelineTabs({ pipelines, active, view }: Props) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div
-        className="flex items-center gap-1 rounded-lg border border-line bg-paper-deep p-0.5"
-        role="tablist"
-      >
-        {pipelines.map((p) => (
-          <button
-            key={p.key}
-            role="tab"
-            aria-selected={p.key === active}
-            onClick={() => setParam("p", p.key)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mist",
-              p.key === active
-                ? "bg-surface text-ink shadow-sm"
-                : "text-ink-mid hover:text-ink",
-            )}
-          >
-            {p.name}
-            {p.count != null && (
-              <span className="font-mono text-[10.5px] text-ink-faint">
-                {p.count}
-              </span>
-            )}
-          </button>
-        ))}
+      <div className="max-w-xs flex-1">
+        <Select
+          value={selected}
+          onChange={(v) => setParam("service", v)}
+          ariaLabel="Service"
+          options={[
+            { value: LEADS_VALUE, label: "New enquiries" },
+            ...services.map((s) => ({ value: s.id, label: s.name })),
+          ]}
+        />
       </div>
 
       {/* View switch — hidden on mobile, where the list is simply the view. */}

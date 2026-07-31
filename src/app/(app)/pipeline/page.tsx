@@ -1,32 +1,43 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
-import { getPipelines, getBoardCases, type PipelineKey } from "@/lib/db/pipelines";
+import {
+  getPipelineByKey,
+  getBoardCases,
+  getBoardCasesForService,
+} from "@/lib/db/pipelines";
+import { listPipelineServices, getServiceStagePath } from "@/lib/db/stages";
 import { Board } from "@/components/board/Board";
 import { CaseList } from "@/components/board/CaseList";
-import { PipelineTabs } from "./PipelineTabs";
+import { PipelineSelector, LEADS_VALUE } from "./PipelineSelector";
 
 export const metadata: Metadata = { title: "Pipeline · Kalari" };
-
-const VALID: PipelineKey[] = ["sales", "processing", "renewal"];
 
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ p?: string; view?: string }>;
+  searchParams: Promise<{ service?: string; view?: string }>;
 }) {
   const sp = await searchParams;
-  const key: PipelineKey = VALID.includes(sp.p as PipelineKey)
-    ? (sp.p as PipelineKey)
-    : "processing";
   const view = sp.view === "board" ? "board" : sp.view === "list" ? "list" : null;
 
-  const [pipelines, cases] = await Promise.all([
-    getPipelines(),
-    getBoardCases(key),
-  ]);
+  const services = await listPipelineServices();
+  const selected =
+    sp.service && (sp.service === LEADS_VALUE || services.some((s) => s.id === sp.service))
+      ? sp.service
+      : (services[0]?.id ?? LEADS_VALUE);
 
-  const pipeline = pipelines.find((p) => p.key === key);
-  const stages = pipeline?.stages ?? [];
+  const [stages, cases] =
+    selected === LEADS_VALUE
+      ? await (async () => {
+          const pipeline = await getPipelineByKey("sales");
+          return [pipeline?.stages ?? [], await getBoardCases("sales")] as const;
+        })()
+      : await Promise.all([
+          getServiceStagePath(selected).then((path) =>
+            path.map((r) => ({ id: r.stage_id, name: r.name, is_terminal: r.is_terminal })),
+          ),
+          getBoardCasesForService(selected),
+        ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -36,15 +47,7 @@ export default async function PipelinePage({
         subtitle="Every customer, at every stage."
       />
 
-      <PipelineTabs
-        pipelines={pipelines.map((p) => ({
-          key: p.key,
-          name: p.name,
-          count: p.key === key ? cases.length : undefined,
-        }))}
-        active={key}
-        view={view}
-      />
+      <PipelineSelector services={services} selected={selected} view={view} />
 
       {/*
         §5.3: "The board is unusable on a phone at 200 cases, and employees live

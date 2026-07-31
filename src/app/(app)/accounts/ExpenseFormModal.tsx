@@ -70,14 +70,20 @@ export function ExpenseFormModal({
     }
     setError(null);
     start(async () => {
-      const { amount: _amount, ...rest } = form;
-      const res = await saveExpense({ ...rest, amountPaise });
-      if (!res.ok) {
-        setError(res.error);
-        return;
+      try {
+        const { amount: _amount, ...rest } = form;
+        const res = await saveExpense({ ...rest, amountPaise });
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        toast("Expense recorded.", "ok");
+        setOpen(false);
+      } catch {
+        // A thrown Server Action call — e.g. a build changed under an open tab —
+        // otherwise leaves the button stuck on "Saving…" forever with no way out.
+        setError("Couldn't reach the server. Refresh the page and try again.");
       }
-      toast("Expense recorded.", "ok");
-      setOpen(false);
     });
   };
 
