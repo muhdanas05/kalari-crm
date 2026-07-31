@@ -1,0 +1,14 @@
+-- Bug fix: saving ANY stage's checkpoint config (the /admin/stages editor's
+-- "Needs input from customer" toggle + subject/body) failed for every stage,
+-- every time, with "permission denied for table stage_email_config".
+--
+-- Root cause, found by reproducing the exact upsert as the real signed-in
+-- admin: PostgREST's .upsert({stage_id, ...}, {onConflict: "stage_id"})
+-- compiles to `INSERT ... ON CONFLICT (stage_id) DO UPDATE SET stage_id =
+-- excluded.stage_id, ...` — stage_id appears in the SET list even though its
+-- value never actually changes (it's the conflict key). Every prior grant
+-- (0020, 0034, 0035) covered enabled/template_key/requires_input/
+-- custom_subject/custom_body but never stage_id itself, so Postgres denied
+-- the whole statement. saveStageConfig() in admin/stages/actions.ts sends
+-- exactly this shape, so this has been broken since that action shipped.
+grant update (stage_id) on public.stage_email_config to authenticated;

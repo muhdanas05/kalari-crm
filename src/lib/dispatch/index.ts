@@ -241,7 +241,10 @@ async function tryQueueEmail(
     customer_id: customer.id,
     case_id: event.case_id,
     invoice_id: event.entity === "invoice" ? event.entity_id : null,
-    template_key: templateKey,
+    // email_queue.template_key has a real FK to email_templates.key — "custom"
+    // (case.input_needed's rule.email marker) isn't a row there and never will
+    // be, so it must go in as null, not the literal string.
+    template_key: event.type === "case.input_needed" ? null : templateKey,
     to_email: customer.email,
     subject,
     body,
