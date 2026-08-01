@@ -34,25 +34,42 @@ export type StagePathRow = {
   custom_body: string | null;
 };
 
-/** One service's stage path, in order, with each stage's email/input config. */
+/**
+ * One service's stage path, in order, with each stage's email/input config.
+ *
+ * Two queries, not one embedded select: stage_applicability.stage_id and
+ * stage_email_config.stage_id both reference stages.id, but there is no
+ * direct foreign key BETWEEN stage_applicability and stage_email_config —
+ * PostgREST can only auto-embed across an actual FK, so asking it to join
+ * them in one .select() fails with PGRST200 ("no relationship found"). That
+ * error was being silently swallowed here (destructured `data` with no
+ * `error` check), so this returned an empty array — always, for every
+ * service — and the UI read that as "no stages yet" even when the path was
+ * fully built. Fetching stage_email_config separately, keyed by stage_id,
+ * and merging in JS sidesteps the missing relationship entirely.
+ */
 export async function getServiceStagePath(serviceId: string): Promise<StagePathRow[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data: path, error } = await supabase
     .from("stage_applicability")
-    .select(
-      "stage_id, sort_order, stages!inner(name, key, is_terminal), stage_email_config(enabled, requires_input, custom_subject, custom_body)",
-    )
+    .select("stage_id, sort_order, stages!inner(name, key, is_terminal)")
     .eq("service_id", serviceId)
     .order("sort_order");
 
-  return (data ?? []).map((r) => {
+  if (error) throw new Error(`Failed to load the stage path: ${error.message}`);
+  if (!path || path.length === 0) return [];
+
+  const stageIds = path.map((r) => r.stage_id);
+  const { data: configs } = await supabase
+    .from("stage_email_config")
+    .select("stage_id, enabled, requires_input, custom_subject, custom_body")
+    .in("stage_id", stageIds);
+
+  const byStage = new Map((configs ?? []).map((c) => [c.stage_id, c]));
+
+  return path.map((r) => {
     const stage = r.stages as unknown as { name: string; key: string; is_terminal: boolean };
-    const cfg = r.stage_email_config as unknown as {
-      enabled: boolean | null;
-      requires_input: boolean | null;
-      custom_subject: string | null;
-      custom_body: string | null;
-    } | null;
+    const cfg = byStage.get(r.stage_id);
     return {
       stage_id: r.stage_id,
       name: stage.name,
