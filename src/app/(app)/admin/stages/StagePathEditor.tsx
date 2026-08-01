@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Tag } from "@/components/ui/Tag";
@@ -25,16 +26,24 @@ export function StagePathEditor({
   available: { id: string; name: string }[];
 }) {
   const toast = useToast();
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [newName, setNewName] = useState("");
   const [addExisting, setAddExisting] = useState("");
   const [openConfig, setOpenConfig] = useState<string | null>(null);
 
+  // revalidatePath() on the server doesn't reliably bust the client router
+  // cache for a page keyed by a search param (?service=), so the action
+  // could succeed — the toast fires — while this component keeps rendering
+  // the props it was first passed. router.refresh() forces a real re-fetch
+  // of the current URL, which is the one thing guaranteed to pick up the
+  // write regardless of that cache.
   const runAction = (fn: () => Promise<{ ok: boolean; error?: string }>, okMsg: string) => {
     start(async () => {
       const res = await fn();
       if (!res.ok) return toast(res.error ?? "Something went wrong.", "error");
       toast(okMsg, "ok");
+      router.refresh();
     });
   };
 
@@ -49,6 +58,7 @@ export function StagePathEditor({
       if (!added.ok) return toast(added.error, "error");
       toast(`"${newName.trim()}" added to the path.`, "ok");
       setNewName("");
+      router.refresh();
     });
   };
 
@@ -149,7 +159,10 @@ export function StagePathEditor({
                 {openConfig === stage.stage_id && (
                   <StageConfigForm
                     stage={stage}
-                    onSaved={() => setOpenConfig(null)}
+                    onSaved={() => {
+                      setOpenConfig(null);
+                      router.refresh();
+                    }}
                   />
                 )}
               </li>
