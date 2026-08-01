@@ -52,33 +52,6 @@ export async function getSettings() {
   return data ?? [];
 }
 
-/** Which stages email, joined to their stage — the per-stage config UI. */
-export async function getStageEmailConfig() {
-  const supabase = await createClient();
-  const [{ data: cfg }, { data: stages }] = await Promise.all([
-    supabase.from("stage_email_config").select("*"),
-    supabase
-      .from("stages")
-      .select("id, key, name, sort_order, pipeline_id, pipelines(key, name)")
-      .order("sort_order"),
-  ]);
-
-  const byStage = new Map((cfg ?? []).map((c) => [c.stage_id, c]));
-  return (stages ?? [])
-    .filter((s) => {
-      const p = s.pipelines as unknown as { key: string } | null;
-      return p?.key === "processing";
-    })
-    .map((s) => ({
-      stage_id: s.id,
-      key: s.key,
-      name: s.name,
-      sort_order: s.sort_order,
-      enabled: byStage.get(s.id)?.enabled ?? false,
-      template_key: byStage.get(s.id)?.template_key ?? null,
-    }));
-}
-
 /** The History feed — everything, failures flagged. */
 export async function getHistory(opts: { source?: string; errorsOnly?: boolean; limit?: number } = {}) {
   const supabase = await createClient();

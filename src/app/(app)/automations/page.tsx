@@ -4,16 +4,10 @@ import { PageHead } from "@/components/PageHead";
 import { StatCard } from "@/components/ui/StatCard";
 import { Tag } from "@/components/ui/Tag";
 import { requireAdmin } from "@/lib/auth/session";
-import {
-  getAutomationLog,
-  getAutomationHealth,
-  getSettings,
-  getStageEmailConfig,
-} from "@/lib/db/automations";
+import { getAutomationLog, getAutomationHealth, getSettings } from "@/lib/db/automations";
 import { formatDateTime } from "@/lib/dates";
 import { DISPATCH_RULES } from "@/lib/dispatch/rules";
 import { AlertTriangle, Zap, Mail, PhoneCall, Check } from "@/components/icons";
-import { StageEmailToggles } from "./StageEmailToggles";
 import { RuleToggles } from "./RuleToggles";
 
 export const metadata: Metadata = { title: "Automations · Kalari" };
@@ -29,11 +23,10 @@ export const metadata: Metadata = { title: "Automations · Kalari" };
  */
 export default async function AutomationsPage() {
   await requireAdmin();
-  const [log, health, settings, stageConfig] = await Promise.all([
+  const [log, health, settings] = await Promise.all([
     getAutomationLog(120),
     getAutomationHealth(),
     getSettings(),
-    getStageEmailConfig(),
   ]);
 
   const emailOn = settings.find((s) => s.key === "email.enabled")?.enabled ?? false;
@@ -100,7 +93,21 @@ export default async function AutomationsPage() {
 
       <RuleToggles settings={settings} />
 
-      <StageEmailToggles stages={stageConfig} />
+      <Link
+        href="/admin/stages"
+        className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-5 py-4 transition-colors hover:border-line-strong"
+      >
+        <span>
+          <span className="block text-[13px] font-semibold text-ink">
+            Which stages email the customer, and what they say
+          </span>
+          <span className="mt-0.5 block text-[12px] font-medium text-ink-faint">
+            Set per stage in Pipeline Stages — the status update, the checkpoint
+            request, or both.
+          </span>
+        </span>
+        <Zap size={15} className="shrink-0 text-ink-faint" />
+      </Link>
 
       <section>
         <h2 className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-gold-deep">

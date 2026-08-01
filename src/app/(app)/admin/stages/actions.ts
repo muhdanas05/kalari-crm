@@ -176,13 +176,19 @@ export async function moveStage(
 }
 
 /**
- * The per-stage email + input settings — the "fully custom" tab. Upsert: a
- * stage created before the editor's INSERT grant existed (or one whose config
- * insert failed non-fatally above) may have no row yet.
+ * Both of a stage's emails, one save: the plain status update (shared
+ * "stage.changed" template, just an on/off switch here) and the checkpoint
+ * request (fully custom per stage). A stage can have neither, either, or
+ * both — the trigger sends whichever are switched on, independently, so
+ * "both" is genuinely two separate emails, not one merged message.
+ *
+ * Upsert: a stage created before the editor's INSERT grant existed (or one
+ * whose config insert failed non-fatally above) may have no row yet.
  */
 export async function saveStageConfig(
   stageId: string,
   input: {
+    enabled: boolean;
     requiresInput: boolean;
     customSubject: string;
     customBody: string;
@@ -198,6 +204,8 @@ export async function saveStageConfig(
   const { error } = await supabase.from("stage_email_config").upsert(
     {
       stage_id: stageId,
+      enabled: input.enabled,
+      template_key: input.enabled ? "stage.changed" : null,
       requires_input: input.requiresInput,
       custom_subject: input.customSubject.trim() || null,
       custom_body: input.customBody.trim() || null,

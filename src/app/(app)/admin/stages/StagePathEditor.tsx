@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { Tag } from "@/components/ui/Tag";
 import { useToast } from "@/components/ui/Toast";
-import { ChevronUp, ChevronDown, X, Plus, Mail, PhoneCall } from "@/components/icons";
+import { ChevronUp, ChevronDown, X, Plus, Mail, PhoneCall, GripVertical } from "@/components/icons";
 import {
   createStage,
   addStageToPath,
@@ -105,6 +105,12 @@ export function StagePathEditor({
                         {stage.name}
                       </span>
                       {stage.is_terminal && <Tag tone="neutral">Terminal</Tag>}
+                      {stage.enabled && (
+                        <Tag tone="accent">
+                          <Mail size={10} className="mr-1 inline" />
+                          Update
+                        </Tag>
+                      )}
                       {stage.requires_input && (
                         <Tag tone="warn">
                           <Mail size={10} className="mr-1 inline" />
@@ -212,6 +218,58 @@ export function StagePathEditor({
   );
 }
 
+const VARIABLES = [
+  { token: "{{customer_name}}", label: "Customer name" },
+  { token: "{{service_name}}", label: "Service" },
+  { token: "{{stage_name}}", label: "Stage" },
+  { token: "{{next_step}}", label: "Next step" },
+  { token: "{{portal_url}}", label: "Portal link" },
+  { token: "{{payment_instructions}}", label: "Payment instructions" },
+];
+
+/**
+ * Drag a chip into the Subject or Message field, or just click it — it lands
+ * wherever the cursor last was. Built so nobody has to remember or type
+ * "{{customer_name}}" by hand.
+ */
+function VariableChips({ onInsert }: { onInsert: (token: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {VARIABLES.map((v) => (
+        <button
+          key={v.token}
+          type="button"
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData("text/plain", v.token);
+            e.dataTransfer.effectAllowed = "copy";
+          }}
+          onClick={() => onInsert(v.token)}
+          title={`Drag into a field below, or click to insert — ${v.token}`}
+          className="inline-flex cursor-grab items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-semibold text-ink-soft transition-colors hover:border-accent hover:bg-accent-mist hover:text-accent active:cursor-grabbing"
+        >
+          <GripVertical size={10} className="text-ink-ghost" />
+          {v.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+type FieldEl = HTMLInputElement | HTMLTextAreaElement;
+
+/** Insert `text` at the field's current cursor position, then restore focus + caret. */
+function insertAtCursor(el: FieldEl, text: string, value: string, setValue: (v: string) => void) {
+  const start = el.selectionStart ?? value.length;
+  const end = el.selectionEnd ?? value.length;
+  setValue(value.slice(0, start) + text + value.slice(end));
+  requestAnimationFrame(() => {
+    el.focus();
+    const pos = start + text.length;
+    el.setSelectionRange(pos, pos);
+  });
+}
+
 function StageConfigForm({
   stage,
   onSaved,
@@ -221,6 +279,7 @@ function StageConfigForm({
 }) {
   const toast = useToast();
   const [pending, start] = useTransition();
+  const [enabled, setEnabled] = useState(stage.enabled);
   const [requiresInput, setRequiresInput] = useState(stage.requires_input);
   const [subject, setSubject] = useState(stage.custom_subject ?? "");
   const [body, setBody] = useState(
@@ -228,51 +287,111 @@ function StageConfigForm({
   );
   const [error, setError] = useState<string | null>(null);
 
+  const subjectRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const [activeField, setActiveField] = useState<"subject" | "body">("body");
+
+  const insertToken = (token: string) => {
+    if (activeField === "subject" && subjectRef.current) {
+      insertAtCursor(subjectRef.current, token, subject, setSubject);
+    } else if (bodyRef.current) {
+      insertAtCursor(bodyRef.current, token, body, setBody);
+    }
+  };
+
+  const onDrop = (field: "subject" | "body") => (e: React.DragEvent<FieldEl>) => {
+    e.preventDefault();
+    const token = e.dataTransfer.getData("text/plain");
+    if (!token) return;
+    if (field === "subject") insertAtCursor(e.currentTarget, token, subject, setSubject);
+    else insertAtCursor(e.currentTarget, token, body, setBody);
+  };
+
   const save = () => {
     setError(null);
     start(async () => {
       const res = await saveStageConfig(stage.stage_id, {
+        enabled,
         requiresInput,
         customSubject: subject,
         customBody: body,
       });
       if (!res.ok) return setError(res.error);
-      toast("Stage settings saved.", "ok");
+      toast(
+        enabled && requiresInput
+          ? "Saved — this stage now sends two emails: the update and the checkpoint request."
+          : "Stage settings saved.",
+        "ok",
+      );
       onSaved();
     });
   };
 
   return (
     <div className="border-t border-line bg-paper px-4 py-4">
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-3.5">
-        <input
-          type="checkbox"
-          checked={requiresInput}
-          onChange={(e) => setRequiresInput(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
-        />
-        <span>
-          <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
-            <PhoneCall size={13} className="text-ink-faint" />
-            This is a checkpoint — needs something from the customer
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-3.5">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+              <Mail size={13} className="text-ink-faint" />
+              Send our normal status update
+            </span>
+            <span className="mt-0.5 block text-[11.5px] font-medium leading-[1.5] text-ink-mid">
+              The plain "you're now at {stage.name}" email, worded the same
+              way for every stage.
+            </span>
           </span>
-          <span className="mt-0.5 block text-[11.5px] font-medium leading-[1.5] text-ink-mid">
-            The moment a case enters this stage, the email below sends
-            automatically and a call task is raised — so it happens whether
-            or not the email is opened.
+        </label>
+
+        <label className="flex flex-1 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-3.5">
+          <input
+            type="checkbox"
+            checked={requiresInput}
+            onChange={(e) => setRequiresInput(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+              <PhoneCall size={13} className="text-ink-faint" />
+              This is also a checkpoint
+            </span>
+            <span className="mt-0.5 block text-[11.5px] font-medium leading-[1.5] text-ink-mid">
+              Needs something from the customer — sends the custom message
+              below and raises a call task, so it happens whether or not the
+              email is opened.
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      </div>
+
+      {enabled && requiresInput && (
+        <p className="mt-2 rounded-lg bg-accent-mist px-3 py-2 text-[11.5px] font-medium text-accent">
+          Both are on — a customer entering {stage.name} gets two separate
+          emails: the status update, then this checkpoint request.
+        </p>
+      )}
 
       {requiresInput && (
         <div className="mt-3 flex flex-col gap-3">
+          <VariableChips onInsert={insertToken} />
+
           <label className="flex flex-col gap-1.5">
             <span className="text-[11px] font-bold uppercase tracking-[1px] text-ink-mid">
               Subject
             </span>
             <input
+              ref={subjectRef}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              onFocus={() => setActiveField("subject")}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop("subject")}
               placeholder="e.g. We need your bank transfer receipt"
               className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-[13px] text-ink outline-none placeholder:text-ink-ghost focus:border-accent"
             />
@@ -283,19 +402,16 @@ function StageConfigForm({
               Message
             </span>
             <textarea
+              ref={bodyRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
+              onFocus={() => setActiveField("body")}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop("body")}
               rows={7}
               className="w-full rounded-lg border border-line bg-surface px-3 py-2 font-mono text-[12.5px] leading-relaxed text-ink outline-none placeholder:text-ink-ghost focus:border-accent"
             />
           </label>
-
-          <p className="text-[11px] font-medium text-ink-faint">
-            Tokens you can use: <code className="font-mono">{"{{customer_name}}"}</code>{" "}
-            <code className="font-mono">{"{{portal_url}}"}</code>{" "}
-            <code className="font-mono">{"{{service_name}}"}</code>{" "}
-            <code className="font-mono">{"{{stage_name}}"}</code>
-          </p>
         </div>
       )}
 
