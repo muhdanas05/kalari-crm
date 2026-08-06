@@ -26,6 +26,7 @@ export default async function InvoicePage({
   const { invoice, lines, payments, customer } = detail;
   const voided = invoice.lifecycle === "void";
   const outstanding = invoice.outstanding_paise ?? 0;
+  const paid = invoice.paid_paise ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -61,6 +62,7 @@ export default async function InvoicePage({
                 kind="invoice"
                 invoiceId={invoice.id!}
                 label={invoice.number ?? "This invoice"}
+                paidPaise={paid}
               />
             )}
           </div>

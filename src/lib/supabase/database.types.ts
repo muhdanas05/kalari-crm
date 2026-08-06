@@ -1605,6 +1605,114 @@ export type Database = {
           },
         ]
       }
+      quotations: {
+        Row: {
+          amount_note: string | null
+          archived_at: string | null
+          converted_invoice_id: string | null
+          created_at: string
+          created_by: string | null
+          custom_service_name: string | null
+          customer_id: string
+          gst_paise: number
+          id: string
+          lines: Json
+          number: string | null
+          pax_adults: number
+          pax_children: number
+          seq: number
+          series: string
+          service_id: string | null
+          status: string
+          subtotal_paise: number
+          total_paise: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          amount_note?: string | null
+          archived_at?: string | null
+          converted_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_service_name?: string | null
+          customer_id: string
+          gst_paise?: number
+          id?: string
+          lines?: Json
+          number?: string | null
+          pax_adults?: number
+          pax_children?: number
+          seq: number
+          series: string
+          service_id?: string | null
+          status?: string
+          subtotal_paise?: number
+          total_paise?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          amount_note?: string | null
+          archived_at?: string | null
+          converted_invoice_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_service_name?: string | null
+          customer_id?: string
+          gst_paise?: number
+          id?: string
+          lines?: Json
+          number?: string | null
+          pax_adults?: number
+          pax_children?: number
+          seq?: number
+          series?: string
+          service_id?: string | null
+          status?: string
+          subtotal_paise?: number
+          total_paise?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_converted_invoice_id_fkey"
+            columns: ["converted_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_converted_invoice_id_fkey"
+            columns: ["converted_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices_v"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           active: boolean
@@ -2137,10 +2245,19 @@ export type Database = {
       }
     }
     Functions: {
-      admin_set_user: {
-        Args: { p_active?: boolean; p_user_id: string }
-        Returns: undefined
-      }
+      admin_set_user:
+        | {
+            Args: { p_active?: boolean; p_user_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_active?: boolean
+              p_role?: Database["public"]["Enums"]["user_role"]
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       archive_case: { Args: { p_case_id: string }; Returns: undefined }
       archive_customer: { Args: { p_customer_id: string }; Returns: undefined }
       archive_supplier: { Args: { p_supplier_id: string }; Returns: undefined }
@@ -2169,6 +2286,21 @@ export type Database = {
         }[]
       }
       can_access_customer: { Args: { p_customer_id: string }; Returns: boolean }
+      cancel_invoice_with_refund: {
+        Args: { p_invoice_id: string; p_reason: string }
+        Returns: undefined
+      }
+      convert_quotation_to_invoice: {
+        Args: {
+          p_expected_total_paise: number
+          p_idempotency_key: string
+          p_quotation_id: string
+        }
+        Returns: {
+          invoice_id: string
+          number: string
+        }[]
+      }
       create_call_task: {
         Args: {
           p_assign_to?: string
@@ -2202,6 +2334,25 @@ export type Database = {
           case_id: string
           customer_id: string
           is_new_customer: boolean
+        }[]
+      }
+      create_quotation: {
+        Args: {
+          p_amount_note?: string
+          p_custom_service_name?: string
+          p_customer_id: string
+          p_gst_paise?: number
+          p_lines?: Json
+          p_pax_adults?: number
+          p_pax_children?: number
+          p_service_id?: string
+          p_subtotal_paise?: number
+          p_total_paise?: number
+          p_valid_until?: string
+        }
+        Returns: {
+          number: string
+          quotation_id: string
         }[]
       }
       current_invoice_series: { Args: never; Returns: string }

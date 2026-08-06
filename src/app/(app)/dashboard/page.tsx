@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireProfile } from "@/lib/auth/session";
+import { requireProfile, isAdmin } from "@/lib/auth/session";
 import { getAdminDashboard } from "@/lib/db/dashboard";
 import { getStuckCases } from "@/lib/db/pipelines";
 import { PageHead } from "@/components/PageHead";
@@ -19,6 +19,7 @@ export const metadata: Metadata = { title: "Dashboard · Kalari" };
  */
 export default async function DashboardPage() {
   const profile = await requireProfile();
+  const admin = isAdmin(profile);
   const [d, stuck] = await Promise.all([getAdminDashboard(), getStuckCases(6)]);
 
   return (
@@ -29,34 +30,49 @@ export default async function DashboardPage() {
         subtitle="Every enquiry, case and invoice, in one place."
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/*
+        Locked decision: a manager's dashboard has no revenue tile — not
+        hidden behind a click, not zeroed out, just not rendered. Only "New
+        leads today" isn't money.
+      */}
+      <div
+        className={
+          admin
+            ? "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            : "grid grid-cols-1 gap-3 sm:max-w-xs"
+        }
+      >
         <StatCard
           label="New leads today"
           value={d.newLeadsToday}
           sub={`${d.newLeadsThisWeek} this week`}
           icon={Users}
         />
-        <StatCard
-          label="Collected this month"
-          value={formatPaiseCompact(d.collectedThisMonthFils)}
-          sub="Payments recorded"
-          icon={Banknote}
-          accent="ok"
-        />
-        <StatCard
-          label="Total outstanding"
-          value={formatPaiseCompact(d.outstandingFils)}
-          sub="Invoiced minus paid"
-          icon={FileText}
-          accent={d.outstandingFils > 0 ? "warn" : "default"}
-        />
-        <StatCard
-          label="Overdue"
-          value={d.overdueCount}
-          sub={formatPaise(d.overdueFils)}
-          icon={AlertTriangle}
-          accent={d.overdueCount > 0 ? "alert" : "default"}
-        />
+        {admin && (
+          <>
+            <StatCard
+              label="Collected this month"
+              value={formatPaiseCompact(d.collectedThisMonthFils)}
+              sub="Payments recorded"
+              icon={Banknote}
+              accent="ok"
+            />
+            <StatCard
+              label="Total outstanding"
+              value={formatPaiseCompact(d.outstandingFils)}
+              sub="Invoiced minus paid"
+              icon={FileText}
+              accent={d.outstandingFils > 0 ? "warn" : "default"}
+            />
+            <StatCard
+              label="Overdue"
+              value={d.overdueCount}
+              sub={formatPaise(d.overdueFils)}
+              icon={AlertTriangle}
+              accent={d.overdueCount > 0 ? "alert" : "default"}
+            />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

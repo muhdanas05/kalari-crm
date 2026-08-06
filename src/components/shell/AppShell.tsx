@@ -74,6 +74,7 @@ export function AppShell({
           />
           <MobileMorePopover
             open={fullNavOpen}
+            role={profile.role}
             onClose={() => setFullNavOpen(false)}
           />
         </div>
@@ -92,6 +93,7 @@ const WIDE_ROUTES = [
   "/history",
   "/pipeline",
   "/customers",
+  "/quotations",
   "/invoices",
   "/payments",
   "/calls",

@@ -5,11 +5,17 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { Ban } from "@/components/icons";
-import { voidInvoice, voidPayment } from "./void-actions";
+import { formatPaise } from "@/lib/money";
+import { voidInvoice, voidPayment, cancelInvoiceWithRefund } from "./void-actions";
 
 /**
  * Void an invoice or a payment. Admin-only in the UI, and admin-only again in
  * the RPC — the second one is the guarantee; this is the courtesy.
+ *
+ * An invoice with payments against it can't just be voided — the money is
+ * real. Pass `paidPaise` and this switches to "cancel & refund" mode: same
+ * dialog, but it's explicit that voiding every payment IS the refund, and
+ * calls cancel_invoice_with_refund() instead of the plain void.
  *
  * A reason is mandatory because a void is the one thing in the ledger that
  * rewrites what a document means, and "why" is the only part that cannot be
@@ -17,7 +23,7 @@ import { voidInvoice, voidPayment } from "./void-actions";
  */
 export function VoidButton(
   props:
-    | { kind: "invoice"; invoiceId: string; label: string }
+    | { kind: "invoice"; invoiceId: string; label: string; paidPaise?: number }
     | { kind: "payment"; paymentId: string; invoiceId: string; label: string },
 ) {
   const toast = useToast();
@@ -27,6 +33,7 @@ export function VoidButton(
   const [error, setError] = useState<string | null>(null);
 
   const isInvoice = props.kind === "invoice";
+  const withRefund = isInvoice && (props.paidPaise ?? 0) > 0;
 
   const openDialog = () => {
     setReason("");
@@ -41,15 +48,20 @@ export function VoidButton(
     }
     setError(null);
     start(async () => {
-      const res = isInvoice
-        ? await voidInvoice(props.invoiceId, reason)
-        : await voidPayment(props.paymentId, props.invoiceId, reason);
+      const res = withRefund
+        ? await cancelInvoiceWithRefund(props.invoiceId, reason)
+        : isInvoice
+          ? await voidInvoice(props.invoiceId, reason)
+          : await voidPayment(props.paymentId, props.invoiceId, reason);
 
       if (!res.ok) {
         setError(res.error);
         return;
       }
-      toast(isInvoice ? "Invoice voided." : "Payment voided.", "ok");
+      toast(
+        withRefund ? "Invoice cancelled and payments refunded." : isInvoice ? "Invoice voided." : "Payment voided.",
+        "ok",
+      );
       setOpen(false);
     });
   };
@@ -58,7 +70,7 @@ export function VoidButton(
     <>
       {isInvoice ? (
         <Button variant="danger" size="sm" icon={Ban} onClick={openDialog}>
-          Void
+          {withRefund ? "Cancel & refund" : "Void"}
         </Button>
       ) : (
         <button
@@ -73,7 +85,7 @@ export function VoidButton(
       <Modal
         open={open}
         onClose={() => !pending && setOpen(false)}
-        title={isInvoice ? "Void this invoice?" : "Void this payment?"}
+        title={withRefund ? "Cancel this invoice and refund the payment?" : isInvoice ? "Void this invoice?" : "Void this payment?"}
         size="sm"
         footer={
           <>
@@ -81,7 +93,7 @@ export function VoidButton(
               Cancel
             </Button>
             <Button variant="danger" size="sm" onClick={submit} disabled={pending}>
-              {pending ? "Voiding…" : "Void it"}
+              {pending ? "Working…" : withRefund ? "Cancel & refund" : "Void it"}
             </Button>
           </>
         }
@@ -93,10 +105,20 @@ export function VoidButton(
             deleting.
           </p>
 
-          {isInvoice && (
+          {withRefund && isInvoice && (
+            <p className="rounded-lg bg-alert-pale px-3 py-2 text-[12px] font-medium text-alert">
+              {formatPaise(props.paidPaise ?? 0)} was paid against this
+              invoice. Cancelling it will also void that payment — the same
+              as returning the money — and neither will count toward
+              collected revenue anywhere in the app from this point on. Make
+              sure the refund has actually been paid back before confirming.
+            </p>
+          )}
+
+          {isInvoice && !withRefund && (
             <p className="rounded-lg bg-paper-deep px-3 py-2 text-[12px] font-medium text-ink-mid">
-              An invoice with payments against it cannot be voided. Correct that
-              with a credit note instead.
+              This invoice has no payments against it, so a plain void is
+              enough — nothing to refund.
             </p>
           )}
 

@@ -43,6 +43,40 @@ export async function voidInvoice(
 }
 
 /**
+ * Cancel an issued invoice that has payments against it — the case
+ * voidInvoice() above refuses. Voids every live payment (the refund: money
+ * that was "collected" no longer counts as such anywhere it's read from —
+ * dashboard, Accounts, invoices_v.outstanding_paise) and the invoice, in one
+ * database transaction. Same guarantees: admin-only, reason required,
+ * number stays consumed, nothing deleted.
+ */
+export async function cancelInvoiceWithRefund(
+  invoiceId: string,
+  reason: string,
+): Promise<VoidResult> {
+  await requireAdmin();
+
+  if (reason.trim().length < 3) {
+    return { ok: false, error: "Say why this invoice is being cancelled." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_invoice_with_refund", {
+    p_invoice_id: invoiceId,
+    p_reason: reason.trim(),
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/invoices");
+  revalidatePath("/payments");
+  revalidatePath("/dashboard");
+  revalidatePath("/accounts");
+  return { ok: true };
+}
+
+/**
  * Void a payment — the money did not arrive, or arrived against the wrong
  * invoice. Also admin-only by RPC.
  *

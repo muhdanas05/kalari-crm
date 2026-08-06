@@ -13,8 +13,10 @@ import {
   BookOpen,
   ScrollText,
   GitBranch,
+  FileCheck,
   type LucideIcon,
 } from "@/components/icons";
+import type { Role } from "@/lib/auth/session";
 
 export type MobileNavLink = {
   label: string;
@@ -52,9 +54,14 @@ export function tabs(): MobileNavLink[] {
   return [TAB_HOME, TAB_PIPELINE, TAB_CUSTOMERS];
 }
 
-/** "More" grid. Items already on the tab bar are not repeated. */
-export function moreSections(): MobileNavSection[] {
-  return [
+/**
+ * "More" grid. Items already on the tab bar are not repeated. A manager
+ * (role=employee) sees everything here except Accounts and the Admin
+ * section — same split as the desktop sidebar (nav-config.ts).
+ */
+export function moreSections(role: Role): MobileNavSection[] {
+  const admin = role === "admin";
+  const sections: MobileNavSection[] = [
     {
       title: "Pipeline",
       items: [
@@ -65,12 +72,15 @@ export function moreSections(): MobileNavSection[] {
     {
       title: "Money",
       items: [
+        { label: "Quotations", href: "/quotations", icon: FileCheck },
         { label: "Invoices", href: "/invoices", icon: FileText },
         { label: "Payments", href: "/payments", icon: CreditCard },
-        { label: "Accounts", href: "/accounts", icon: BookOpen },
+        ...(admin ? [{ label: "Accounts", href: "/accounts", icon: BookOpen }] : []),
       ],
     },
-    {
+  ];
+  if (admin) {
+    sections.push({
       title: "Admin",
       items: [
         { label: "Call Activity", href: "/admin/calls", icon: PhoneCall },
@@ -79,10 +89,11 @@ export function moreSections(): MobileNavSection[] {
         { label: "Integrations", href: "/admin/integrations", icon: Plug },
         { label: "Logs", href: "/admin/logs", icon: ScrollText },
       ],
-    },
-    {
-      title: "Settings",
-      items: [{ label: "Settings", href: "/settings", icon: Settings }],
-    },
-  ];
+    });
+  }
+  sections.push({
+    title: "Settings",
+    items: [{ label: "Settings", href: "/settings", icon: Settings }],
+  });
+  return sections;
 }
