@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export type ToggleResult = { ok: true } | { ok: false; error: string };
 
@@ -11,7 +11,7 @@ export async function setSetting(
   key: string,
   enabled: boolean,
 ): Promise<ToggleResult> {
-  const profile = await requireAdmin();
+  const profile = await requirePermission("automations");
   const supabase = await createClient();
 
   const { error } = await supabase

@@ -1570,6 +1570,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          permissions: string[]
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -1581,6 +1582,7 @@ export type Database = {
           email?: string | null
           id: string
           name: string
+          permissions?: string[]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -1592,6 +1594,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          permissions?: string[]
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -2369,6 +2372,7 @@ export type Database = {
         Returns: boolean
       }
       has_email_consent: { Args: { p_customer_id: string }; Returns: boolean }
+      has_permission: { Args: { p_page: string }; Returns: boolean }
       is_active_user: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       issue_invoice: {

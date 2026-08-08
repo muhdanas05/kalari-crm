@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import type { PaymentMethod } from "@/lib/db/accounts";
 
 export type ExpenseInput = {
@@ -19,11 +19,12 @@ export type ExpenseInput = {
 export type SaveExpenseResult = { ok: true; id: string } | { ok: false; error: string };
 
 /**
- * Admin-only in the UI and in RLS (expenses_admin_write). requireAdmin here is
- * defence in depth — the database refuses regardless.
+ * Gated on the 'accounts' permission in the UI and in RLS
+ * (expenses_admin_write) — this is defence in depth, the database refuses
+ * regardless.
  */
 export async function saveExpense(input: ExpenseInput): Promise<SaveExpenseResult> {
-  const profile = await requireAdmin();
+  const profile = await requirePermission("accounts");
 
   if (!input.category.trim()) return { ok: false, error: "Category is required." };
   if (!Number.isSafeInteger(input.amountPaise) || input.amountPaise <= 0) {
@@ -62,7 +63,7 @@ export async function saveExpense(input: ExpenseInput): Promise<SaveExpenseResul
 export async function archiveExpense(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireAdmin();
+  await requirePermission("accounts");
   const supabase = await createClient();
   const { error } = await supabase
     .from("expenses")

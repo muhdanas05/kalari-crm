@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/session";
 import type { Database } from "@/lib/supabase/database.types";
+import { DEFAULT_MANAGER_PERMISSIONS, type PageKey } from "@/lib/auth/pages";
 
 type Role = Database["public"]["Enums"]["user_role"];
 
@@ -21,6 +22,7 @@ export async function createUser(input: {
   password: string;
   name: string;
   role: Role;
+  permissions?: PageKey[];
 }): Promise<Result> {
   await requireAdmin();
 
@@ -39,10 +41,13 @@ export async function createUser(input: {
   });
   if (error) return { ok: false, error: error.message };
 
+  const permissions =
+    input.role === "employee" ? (input.permissions ?? DEFAULT_MANAGER_PERMISSIONS) : [];
+
   const { error: profileError } = await admin
     .from("profiles")
     .upsert(
-      { id: data.user.id, name, email, role: input.role, active: true },
+      { id: data.user.id, name, email, role: input.role, active: true, permissions },
       { onConflict: "id" },
     );
   if (profileError) {
@@ -68,6 +73,27 @@ export async function setUserRoleActive(
     p_active: input.active ?? undefined,
     p_role: input.role ?? undefined,
   });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/settings");
+  return { ok: true };
+}
+
+/**
+ * Which tabs this manager can see — the "indepth options, per tab, not
+ * generic" ask. Admin's own permissions array is never read (has_permission
+ * short-circuits true for them), so this only ever meaningfully applies to
+ * a manager.
+ */
+export async function setUserPermissions(
+  userId: string,
+  permissions: PageKey[],
+): Promise<Result> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ permissions })
+    .eq("id", userId);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/settings");
   return { ok: true };

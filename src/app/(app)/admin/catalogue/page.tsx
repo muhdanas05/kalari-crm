@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { getCatalogue, rulesForService } from "@/lib/db/catalogue";
 import { computeTotals } from "@/lib/money";
 import { buildLines } from "@/lib/pricing/engine";
@@ -20,7 +20,7 @@ const QTY_LABEL: Record<string, string> = {
 };
 
 export default async function CataloguePage() {
-  await requireAdmin();
+  await requirePermission("admin_catalogue");
   const { services, rules } = await getCatalogue();
 
   return (

@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
+import { hasPermission, type PageKey } from "@/lib/auth/pages";
+
+export { hasPermission };
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Role = Database["public"]["Enums"]["user_role"];
@@ -92,4 +95,16 @@ export async function requireAdmin(): Promise<Profile> {
 
 export function isAdmin(profile: Profile | null): boolean {
   return profile?.role === "admin";
+}
+
+/**
+ * Use in a page/action gated by a specific permission rather than a flat
+ * admin/not-admin split. Defence in depth, same as requireAdmin() — RLS and
+ * has_permission() in Postgres are the real boundary for anything that
+ * touches data; this just keeps the UI honest about what it's for.
+ */
+export async function requirePermission(page: PageKey): Promise<Profile> {
+  const profile = await requireProfile();
+  if (!hasPermission(profile, page)) redirect("/dashboard");
+  return profile;
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
 import { StatCard } from "@/components/ui/StatCard";
 import { Tag } from "@/components/ui/Tag";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getCallActivity } from "@/lib/db/calls";
 import { OUTCOME_LABEL, type CallOutcome } from "@/lib/calls/display";
@@ -24,7 +24,7 @@ export default async function CallActivityPage({
 }: {
   searchParams: Promise<{ days?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("admin_calls");
   const sp = await searchParams;
   const days = Number(sp.days) || 7;
 

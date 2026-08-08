@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listPipelineServices, getServiceStagePath, listAvailableStages } from "@/lib/db/stages";
 import { ServicePicker } from "./ServicePicker";
 import { StagePathEditor } from "./StagePathEditor";
@@ -24,7 +24,7 @@ export default async function StagesPage({
 }: {
   searchParams: Promise<{ service?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("admin_stages");
   const { service: serviceId } = await searchParams;
 
   const services = await listPipelineServices();

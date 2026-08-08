@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
 import { StatCard } from "@/components/ui/StatCard";
 import { EmptyState } from "@/components/EmptyState";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listLedger, ledgerTotals, defaultRange, type LedgerEntry } from "@/lib/db/accounts";
 import { listSuppliers } from "@/lib/db/suppliers";
 import { formatPaise, formatPaiseBare, formatPaiseCompact } from "@/lib/money";
@@ -27,15 +27,16 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
  * ledger (payments, which already carry receipt numbers), money out on the
  * right (expenses), grouped by the day it happened.
  *
- * Admin only: employees never see company money (locked decision), and the
- * expenses RLS policy enforces the same thing independently.
+ * Gated on the 'accounts' permission — granular per-tab now, not a flat
+ * admin/manager split. The expenses RLS policy checks the same permission
+ * independently, so this isn't just a hidden nav item.
  */
 export default async function AccountsPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("accounts");
   const sp = await searchParams;
   const fallback = defaultRange();
   const from = sp.from && DATE_RE.test(sp.from) ? sp.from : fallback.from;

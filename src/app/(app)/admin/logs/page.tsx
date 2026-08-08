@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listEmailLog, listEmailQueue, listEvents, listAuditLog } from "@/lib/db/logs";
 import { formatDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ export default async function LogsPage({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("admin_logs");
   const sp = await searchParams;
   const tab: TabKey = (TABS.find((t) => t.key === sp.tab)?.key ?? "emails") as TabKey;
 

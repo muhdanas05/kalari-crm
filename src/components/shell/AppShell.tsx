@@ -74,7 +74,7 @@ export function AppShell({
           />
           <MobileMorePopover
             open={fullNavOpen}
-            role={profile.role}
+            profile={profile}
             onClose={() => setFullNavOpen(false)}
           />
         </div>

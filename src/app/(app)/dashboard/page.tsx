@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireProfile, isAdmin } from "@/lib/auth/session";
+import { requireProfile, hasPermission } from "@/lib/auth/session";
 import { getAdminDashboard } from "@/lib/db/dashboard";
 import { getStuckCases } from "@/lib/db/pipelines";
 import { PageHead } from "@/components/PageHead";
@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: "Dashboard · Kalari" };
  */
 export default async function DashboardPage() {
   const profile = await requireProfile();
-  const admin = isAdmin(profile);
+  const admin = hasPermission(profile, "accounts");
   const [d, stuck] = await Promise.all([getAdminDashboard(), getStuckCases(6)]);
 
   return (
@@ -31,9 +31,9 @@ export default async function DashboardPage() {
       />
 
       {/*
-        Locked decision: a manager's dashboard has no revenue tile — not
-        hidden behind a click, not zeroed out, just not rendered. Only "New
-        leads today" isn't money.
+        Revenue tiles follow the same 'accounts' permission as the Accounts
+        page — not hidden behind a click, not zeroed out, just not rendered
+        for whoever isn't granted it. Only "New leads today" isn't money.
       */}
       <div
         className={

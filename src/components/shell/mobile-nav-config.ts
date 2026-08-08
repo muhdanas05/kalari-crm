@@ -1,22 +1,6 @@
-import {
-  LayoutDashboard,
-  Columns3,
-  Users,
-  LayoutGrid,
-  FileText,
-  CreditCard,
-  Settings,
-  PhoneCall,
-  Tags,
-  Plug,
-  Building2,
-  BookOpen,
-  ScrollText,
-  GitBranch,
-  FileCheck,
-  type LucideIcon,
-} from "@/components/icons";
-import type { Role } from "@/lib/auth/session";
+import { Columns3, Users, LayoutGrid, LayoutDashboard, type LucideIcon } from "@/components/icons";
+import type { Profile } from "@/lib/auth/session";
+import { visibleSections } from "./nav-config";
 
 export type MobileNavLink = {
   label: string;
@@ -50,50 +34,25 @@ export const TAB_CUSTOMERS: MobileNavLink = {
 };
 export const TAB_MORE_ICON = LayoutGrid;
 
+const TAB_HREFS = new Set([TAB_HOME.href, TAB_PIPELINE.href, TAB_CUSTOMERS.href]);
+
 export function tabs(): MobileNavLink[] {
   return [TAB_HOME, TAB_PIPELINE, TAB_CUSTOMERS];
 }
 
 /**
- * "More" grid. Items already on the tab bar are not repeated. A manager
- * (role=employee) sees everything here except Accounts and the Admin
- * section — same split as the desktop sidebar (nav-config.ts).
+ * "More" grid — the same permission-filtered sections as the desktop
+ * sidebar (nav-config.ts is the single source of truth for who sees what),
+ * minus whatever's already on the tab bar and the leading "Dashboard" slot.
  */
-export function moreSections(role: Role): MobileNavSection[] {
-  const admin = role === "admin";
-  const sections: MobileNavSection[] = [
-    {
-      title: "Pipeline",
-      items: [
-        { label: "Suppliers", href: "/suppliers", icon: Building2 },
-        { label: "Call queue", href: "/calls", icon: PhoneCall },
-      ],
-    },
-    {
-      title: "Money",
-      items: [
-        { label: "Quotations", href: "/quotations", icon: FileCheck },
-        { label: "Invoices", href: "/invoices", icon: FileText },
-        { label: "Payments", href: "/payments", icon: CreditCard },
-        ...(admin ? [{ label: "Accounts", href: "/accounts", icon: BookOpen }] : []),
-      ],
-    },
-  ];
-  if (admin) {
-    sections.push({
-      title: "Admin",
-      items: [
-        { label: "Call Activity", href: "/admin/calls", icon: PhoneCall },
-        { label: "Catalogue", href: "/admin/catalogue", icon: Tags },
-        { label: "Pipeline Stages", href: "/admin/stages", icon: GitBranch },
-        { label: "Integrations", href: "/admin/integrations", icon: Plug },
-        { label: "Logs", href: "/admin/logs", icon: ScrollText },
-      ],
-    });
-  }
-  sections.push({
-    title: "Settings",
-    items: [{ label: "Settings", href: "/settings", icon: Settings }],
-  });
-  return sections;
+export function moreSections(profile: Profile): MobileNavSection[] {
+  return visibleSections(profile)
+    .filter((s) => s.title !== "")
+    .map((s) => ({
+      title: s.title,
+      items: s.items
+        .filter((i) => !TAB_HREFS.has(i.href))
+        .map((i) => ({ label: i.label, href: i.href, icon: i.icon })),
+    }))
+    .filter((s) => s.items.length > 0);
 }

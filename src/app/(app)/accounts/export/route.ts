@@ -1,5 +1,5 @@
 import { type NextRequest } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listLedger, defaultRange } from "@/lib/db/accounts";
 import { formatPaiseBare } from "@/lib/money";
 
@@ -14,7 +14,7 @@ function csv(value: string | null): string {
 
 /** The account book as a spreadsheet — what the paper book was for. */
 export async function GET(request: NextRequest) {
-  await requireAdmin();
+  await requirePermission("accounts");
 
   const sp = request.nextUrl.searchParams;
   const fallback = defaultRange();

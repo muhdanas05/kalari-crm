@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { moreSections } from "./mobile-nav-config";
 import { cn } from "@/lib/utils";
-import type { Role } from "@/lib/auth/session";
+import type { Profile } from "@/lib/auth/session";
 
 type Props = {
   open: boolean;
-  role: Role;
+  profile: Profile;
   onClose: () => void;
 };
 
@@ -20,7 +20,7 @@ type Props = {
  * visible items hides. Dismisses on tap-outside, ESC, or a downward drag on the
  * handle. The bottom tab bar stays visible above this (More slot highlighted).
  */
-export function MobileMorePopover({ open, role, onClose }: Props) {
+export function MobileMorePopover({ open, profile, onClose }: Props) {
   const [render, setRender] = useState(open);
   const [shown, setShown] = useState(false);
   const [dragY, setDragY] = useState(0);
@@ -55,7 +55,7 @@ export function MobileMorePopover({ open, role, onClose }: Props) {
 
   if (!render) return null;
 
-  const sections = moreSections(role);
+  const sections = moreSections(profile);
 
   const onHandleDown = (e: React.PointerEvent) => {
     dragStart.current = e.clientY;

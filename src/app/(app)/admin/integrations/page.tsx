@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { IntegrationCard } from "./IntegrationCard";
 
@@ -35,7 +35,7 @@ const INTEGRATIONS = [
 ];
 
 export default async function IntegrationsPage() {
-  await requireAdmin();
+  await requirePermission("admin_integrations");
   const supabase = await createClient();
 
   const { data: requests } = await supabase

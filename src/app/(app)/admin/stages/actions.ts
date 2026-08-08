@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export type Result = { ok: true; stageId?: string } | { ok: false; error: string };
 
@@ -26,7 +26,7 @@ function slugify(name: string): string {
  * is the safe default, but the editor should show real toggles, not a gap).
  */
 export async function createStage(name: string): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_stages");
   const trimmed = name.trim();
   if (!trimmed) return { ok: false, error: "Name the stage." };
 
@@ -76,7 +76,7 @@ export async function createStage(name: string): Promise<Result> {
 
 /** Add an existing stage to a service's path, at the end. */
 export async function addStageToPath(serviceId: string, stageId: string): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_stages");
   const supabase = await createClient();
 
   const { data: current } = await supabase
@@ -101,7 +101,7 @@ export async function addStageToPath(serviceId: string, stageId: string): Promis
  * and a case already sitting in it must not lose its own history.
  */
 export async function removeStageFromPath(serviceId: string, stageId: string): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_stages");
   const supabase = await createClient();
 
   const { count } = await supabase
@@ -140,7 +140,7 @@ export async function moveStage(
   stageId: string,
   direction: "up" | "down",
 ): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_stages");
   const supabase = await createClient();
 
   const { data: rows } = await supabase
@@ -194,7 +194,7 @@ export async function saveStageConfig(
     customBody: string;
   },
 ): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_stages");
 
   if (input.requiresInput && (!input.customSubject.trim() || !input.customBody.trim())) {
     return { ok: false, error: "Write the subject and the message before turning this on." };

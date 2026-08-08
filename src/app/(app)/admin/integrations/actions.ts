@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export type RequestResult = { ok: true } | { ok: false; error: string };
 
@@ -16,7 +16,7 @@ export async function requestIntegration(
   integration: "google_ads" | "meta_ads" | "instagram",
   note?: string,
 ): Promise<RequestResult> {
-  const profile = await requireAdmin();
+  const profile = await requirePermission("admin_integrations");
   const supabase = await createClient();
 
   const { error } = await supabase.from("integration_requests").insert({

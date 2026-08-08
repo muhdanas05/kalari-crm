@@ -2,7 +2,7 @@
 
 import { revalidateTag, revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import type { Database } from "@/lib/supabase/database.types";
 
 type ServiceFamily = Database["public"]["Enums"]["service_family"];
@@ -41,7 +41,7 @@ export type RuleInput = {
  * until the cache expired.
  */
 export async function saveService(input: ServiceInput): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_catalogue");
   const supabase = await createClient();
 
   const name = input.name.trim();
@@ -69,7 +69,7 @@ export async function saveService(input: ServiceInput): Promise<Result> {
 }
 
 export async function saveRule(input: RuleInput): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_catalogue");
   const supabase = await createClient();
 
   const label = input.label.trim();
@@ -104,7 +104,7 @@ export async function saveRule(input: RuleInput): Promise<Result> {
  * never rewrites history.
  */
 export async function archiveService(id: string): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_catalogue");
   const supabase = await createClient();
 
   const { error } = await supabase
@@ -120,7 +120,7 @@ export async function archiveService(id: string): Promise<Result> {
 }
 
 export async function archiveRule(id: string): Promise<Result> {
-  await requireAdmin();
+  await requirePermission("admin_catalogue");
   const supabase = await createClient();
 
   const { error } = await supabase

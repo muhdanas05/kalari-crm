@@ -21,7 +21,7 @@ type Props = {
 };
 
 export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Props) {
-  const sections = visibleSections(profile.role);
+  const sections = visibleSections(profile);
   return (
     <div className={cn("flex h-full w-full flex-col bg-accent-deep", className)}>
       <div className="flex items-center justify-center px-5 pb-4 pt-5">
@@ -47,7 +47,7 @@ export function Sidebar({ profile, errorCount = 0, onNavigate, className }: Prop
                   label={item.label}
                   href={item.href}
                   icon={item.icon}
-                  role={profile.role}
+                  profile={profile}
                   onNavigate={onNavigate}
                   errorDot={item.errorBadge ? errorCount > 0 : false}
                 />

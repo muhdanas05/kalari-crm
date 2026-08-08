@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
 import { getInvoiceDetail, statusLabel, statusTone } from "@/lib/db/invoices";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, hasPermission } from "@/lib/auth/session";
 import { formatPaise, formatPaiseBare, isRateEdited } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { Lock, UserSquare2, FileText } from "@/components/icons";
@@ -56,8 +56,8 @@ export default async function InvoicePage({
                 outstandingFils={outstanding}
               />
             )}
-            {/* Void is admin-only, and the RPC refuses once money is against it. */}
-            {!voided && profile?.role === "admin" && (
+            {/* Void needs the 'invoices' permission, and the RPC refuses once money is against it (plain void — cancel-with-refund handles that case). */}
+            {!voided && hasPermission(profile, "invoices") && (
               <VoidButton
                 kind="invoice"
                 invoiceId={invoice.id!}
@@ -298,7 +298,7 @@ export default async function InvoicePage({
                             Receipt
                           </Link>
                         )}
-                        {profile?.role === "admin" && (
+                        {hasPermission(profile, "invoices") && (
                           <VoidButton
                             kind="payment"
                             paymentId={p.id}

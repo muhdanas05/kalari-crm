@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
 import { EdList } from "@/components/ui/EdList";
 import { Tag } from "@/components/ui/Tag";
-import { requireProfile, isAdmin } from "@/lib/auth/session";
+import { requireProfile, isAdmin, hasPermission } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { listUsers } from "@/lib/db/users";
 import { UsersSection } from "./UsersSection";
@@ -11,11 +11,18 @@ export const metadata: Metadata = { title: "Settings · Kalari" };
 
 export default async function SettingsPage() {
   const profile = await requireProfile();
+  // Admin-only, deliberately not permission-gated: user management is the
+  // one place granting more access lives, so it can't itself be something a
+  // granted permission unlocks — that would let a manager grant themselves
+  // more.
   const admin = isAdmin(profile);
+  const canSeeAutomations = hasPermission(profile, "automations");
   const supabase = await createClient();
 
   const [{ data: settings }, users] = await Promise.all([
-    supabase.from("automation_settings").select("*").order("key"),
+    canSeeAutomations
+      ? supabase.from("automation_settings").select("*").order("key")
+      : Promise.resolve({ data: null }),
     admin ? listUsers() : Promise.resolve([]),
   ]);
 
@@ -37,7 +44,7 @@ export default async function SettingsPage() {
         />
       </section>
 
-      {admin && (
+      {canSeeAutomations && (
         <section className="rounded-xl border border-line bg-surface p-6">
           <h2 className="mb-1 text-base font-bold tracking-[-0.2px] text-ink">
             Automations

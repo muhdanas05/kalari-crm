@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 /**
  * Push a failed queue row back to the front of the line.
@@ -15,7 +15,7 @@ import { requireAdmin } from "@/lib/auth/session";
 export async function retryQueuedEmail(
   id: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireAdmin();
+  await requirePermission("admin_logs");
 
   const supabase = createAdminClient();
   const { error } = await supabase

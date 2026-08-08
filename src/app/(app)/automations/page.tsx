@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
 import { StatCard } from "@/components/ui/StatCard";
 import { Tag } from "@/components/ui/Tag";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { getAutomationLog, getAutomationHealth, getSettings } from "@/lib/db/automations";
 import { formatDateTime } from "@/lib/dates";
 import { DISPATCH_RULES } from "@/lib/dispatch/rules";
@@ -22,7 +22,7 @@ export const metadata: Metadata = { title: "Automations · Kalari" };
  * what did it do, and did anything break.
  */
 export default async function AutomationsPage() {
-  await requireAdmin();
+  await requirePermission("automations");
   const [log, health, settings] = await Promise.all([
     getAutomationLog(120),
     getAutomationHealth(),
