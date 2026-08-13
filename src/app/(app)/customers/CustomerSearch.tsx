@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Loader2 } from "@/components/icons";
 
@@ -18,20 +18,39 @@ export function CustomerSearch({
   const router = useRouter();
   const [q, setQ] = useState(initial);
   const [pending, startTransition] = useTransition();
+  // The last value WE wrote to the URL. Comparing against this instead of
+  // against `initial` is what breaks the loop below.
+  const lastPushed = useRef(initial);
+
+  /*
+   * Adopt a URL change that came from outside — Back/Forward, or a link.
+   *
+   * The debounce effect used to depend on `initial`, so pressing Back was a
+   * trap: the URL returned to /customers, `initial` became "" while `q` was
+   * still "raj", the effect re-fired and replaced the URL straight back to
+   * ?q=raj. You could not leave a search with the Back button.
+   */
+  useEffect(() => {
+    if (initial !== lastPushed.current) {
+      lastPushed.current = initial;
+      setQ(initial);
+    }
+  }, [initial]);
 
   useEffect(() => {
-    if (q === initial) return;
+    if (q === lastPushed.current) return;
     const t = setTimeout(() => {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
       if (category) params.set("category", category);
       const s = params.toString();
+      lastPushed.current = q;
       startTransition(() => {
         router.replace(s ? `/customers?${s}` : "/customers", { scroll: false });
       });
     }, 220);
     return () => clearTimeout(t);
-  }, [q, initial, category, router]);
+  }, [q, category, router]);
 
   return (
     <div className="flex h-10 w-full max-w-sm items-center gap-2 rounded-xl border border-line bg-surface px-3.5 focus-within:border-accent">

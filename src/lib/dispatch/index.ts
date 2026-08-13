@@ -8,6 +8,14 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"];
 
+/**
+ * Give up on an event after this many failures, matching sendQueuedEmails.
+ * A dead event stays visible (processed_at is still null and processed_result
+ * holds the error) — it is skipped, not swept under the carpet, so /admin/logs
+ * can still show it.
+ */
+const MAX_ATTEMPTS = 5;
+
 export type DispatchSummary = {
   claimed: number;
   emailsQueued: number;
@@ -43,6 +51,13 @@ export async function dispatchEvents(limit = 50): Promise<DispatchSummary> {
     .from("events")
     .select("*")
     .is("processed_at", null)
+    // Skip events that have already failed MAX_ATTEMPTS times. Without this a
+    // single poison event retries forever AND, because the queue is ordered
+    // oldest-first, permanently occupies a slot at the head — 50 of them and
+    // the dispatcher stops making progress entirely while every later event
+    // starves. sendQueuedEmails has always had this cap; the dispatcher never
+    // got one.
+    .lt("attempts", MAX_ATTEMPTS)
     .order("occurred_at")
     .limit(limit);
 
@@ -252,9 +267,16 @@ async function tryQueueEmail(
     dedupe_key: dedupe,
   });
 
-  // 23505 = we already queued this exact event. Not an error.
-  if (error && error.code !== "23505") throw new Error(error.message);
-  return error ? "skipped" : "queued";
+  if (error) {
+    // 23505 = this exact event is ALREADY in the queue, i.e. a previous run got
+    // this far and then died before stamping processed_at. The email is going
+    // out. Returning "skipped" here made the caller treat it as "no address on
+    // file" and fire the `when: "fallback"` call task — telling an employee to
+    // ring a customer and read them an invoice they had already been emailed.
+    if (error.code === "23505") return "queued";
+    throw new Error(error.message);
+  }
+  return "queued";
 }
 
 /**

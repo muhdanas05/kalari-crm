@@ -37,35 +37,69 @@ export function AppShell({
     setFullNavOpen(false);
   }, [pathname]);
 
+  const wide = isWide(pathname);
+
+  /*
+   * The topbar's menu button opens different things at different widths: the
+   * slide-in MobileNav drawer on tablet, the bottom "More" popover on phones.
+   * Decided at click time from the live viewport rather than by rendering two
+   * shells — see the note below on why there is only one tree now.
+   */
+  const openNav = () => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 640px)").matches
+    ) {
+      setMobileOpen(true);
+    } else {
+      setFullNavOpen(true);
+    }
+  };
+
+  /*
+   * ONE tree, responsive classes.
+   *
+   * This used to be two sibling subtrees — a `hidden sm:block` desktop shell
+   * and a `sm:hidden` mobile one — each containing {children}. `hidden` is
+   * display:none, NOT conditional rendering, so both were always mounted:
+   * every page existed twice as independent React instances with independent
+   * state and effects. Typing in a form and crossing the 640px breakpoint
+   * showed the other copy's empty state; two <main> and two <h1> were in the
+   * document at all times; every mount cost was doubled; and the two copies of
+   * the customer search fought each other over the URL.
+   */
   return (
     <NuqsAdapter>
       <ToastProvider>
         <div className="min-h-screen bg-paper">
-          {/* Desktop / tablet */}
-          <div className="hidden sm:block">
-            <DesktopShell
+          <div className="flex min-h-[100dvh] gap-3 p-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:min-h-0 sm:pb-3">
+            <aside className="sticky top-3 hidden h-[calc(100vh-24px)] w-[268px] shrink-0 self-start overflow-hidden rounded-2xl bg-accent-deep shadow-floating lg:flex">
+              <Sidebar profile={profile} errorCount={errorCount} />
+            </aside>
+
+            <MobileNav
               profile={profile}
               errorCount={errorCount}
-              mobileOpen={mobileOpen}
-              setMobileOpen={setMobileOpen}
-            >
-              {children}
-            </DesktopShell>
-          </div>
+              open={mobileOpen}
+              onClose={() => setMobileOpen(false)}
+            />
 
-          {/* Mobile: slim topbar card + floating bottom pill nav */}
-          <div className="flex min-h-[100dvh] flex-col gap-3 p-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:hidden">
-            <header className="sticky top-3 z-20 h-16 rounded-2xl bg-surface shadow-floating">
-              <Topbar
-                profile={profile}
-                onOpenMobileNav={() => setFullNavOpen(true)}
-              />
-            </header>
-            <main className="flex-1">
-              <div className="animate-page-in mx-auto w-full max-w-[1280px] px-2 pt-2">
-                {children}
-              </div>
-            </main>
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <header className="sticky top-3 z-20 h-16 rounded-2xl bg-surface shadow-floating">
+                <Topbar profile={profile} onOpenMobileNav={openNav} />
+              </header>
+
+              <main className="flex-1">
+                <div
+                  className={cn(
+                    "animate-page-in w-full px-2 pt-2 sm:px-6 sm:pb-6 sm:pt-4",
+                    wide ? "lg:px-8" : "mx-auto max-w-[1280px] lg:px-10",
+                  )}
+                >
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
 
           <MobileTabBar
@@ -106,55 +140,4 @@ const WIDE_ROUTES = [
 
 function isWide(pathname: string) {
   return WIDE_ROUTES.includes(pathname);
-}
-
-function DesktopShell({
-  profile,
-  errorCount,
-  children,
-  mobileOpen,
-  setMobileOpen,
-}: {
-  profile: Profile;
-  errorCount: number;
-  children: React.ReactNode;
-  mobileOpen: boolean;
-  setMobileOpen: (v: boolean) => void;
-}) {
-  const pathname = usePathname();
-  const wide = isWide(pathname);
-
-  return (
-    <div className="flex gap-3 p-3">
-      <aside className="sticky top-3 hidden h-[calc(100vh-24px)] w-[268px] shrink-0 self-start overflow-hidden rounded-2xl bg-accent-deep shadow-floating lg:flex">
-        <Sidebar profile={profile} errorCount={errorCount} />
-      </aside>
-
-      <MobileNav
-        profile={profile}
-        errorCount={errorCount}
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <header className="sticky top-3 z-20 h-16 rounded-2xl bg-surface shadow-floating">
-          <Topbar profile={profile} onOpenMobileNav={() => setMobileOpen(true)} />
-        </header>
-
-        <main className="flex-1">
-          <div
-            className={cn(
-              "animate-page-in",
-              wide
-                ? "w-full px-6 pb-6 pt-4 lg:px-8"
-                : "mx-auto w-full max-w-[1280px] px-6 pb-6 pt-4 lg:px-10",
-            )}
-          >
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
 }

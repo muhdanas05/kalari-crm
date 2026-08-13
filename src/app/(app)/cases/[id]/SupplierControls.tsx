@@ -29,10 +29,14 @@ export function SupplierControls({
   const [selected, setSelected] = useState(current?.id ?? "");
 
   const onPick = (id: string) => {
+    const previous = selected;
     setSelected(id);
     start(async () => {
       const res = await setCaseSupplier(caseId, id || null);
       if (!res.ok) {
+        // Revert: without this the dropdown kept showing a supplier that was
+        // never saved, and the refreshed prop could not correct it either.
+        setSelected(previous);
         toast(res.error, "error");
         return;
       }
@@ -55,7 +59,16 @@ export function SupplierControls({
       />
 
       {current && (
+        /*
+         * key on the supplier id so switching supplier REMOUNTS the composer.
+         * Its subject/body are useState initialisers built from supplierName,
+         * so without this they kept the previous supplier's name: after
+         * changing supplier the draft still read "Hi <old supplier>," while
+         * emailSupplier resolves the recipient server-side and sent it to the
+         * NEW one — a message addressed to a competitor.
+         */
         <ComposeButton
+          key={current.id}
           caseId={caseId}
           supplierName={current.name}
           hasEmail={!!current.email}

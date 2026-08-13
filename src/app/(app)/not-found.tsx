@@ -1,6 +1,23 @@
 import Link from "next/link";
 import { SearchX, LayoutDashboard } from "@/components/icons";
-import { Button } from "@/components/ui/Button";
+
+/*
+ * Deliberately NOT using <Button> here.
+ *
+ * This is a Server Component, and Button is "use client". Passing
+ * icon={LayoutDashboard} across that boundary hands React a Lucide
+ * forwardRef object — a non-serializable value — so every notFound() in the
+ * (app) group threw "Only plain objects can be passed to Client Components"
+ * and rendered the error overlay INSTEAD of this page. Hitting any id the
+ * user isn't allowed to see showed a crash rather than "Not found".
+ *
+ * Rendering the icon as a child (as with SearchX below) is fine — that
+ * produces plain serializable output. It is passing the component ITSELF as
+ * a prop that breaks. Styled links also fix the invalid <a><button> nesting
+ * the old markup produced.
+ */
+const LINK_BASE =
+  "inline-flex items-center justify-center gap-2 rounded-full h-8 px-3 text-[12px] font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.97] ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-mist focus-visible:ring-offset-1";
 
 /**
  * Reached by notFound() on the detail pages — which fires both for a URL that
@@ -25,15 +42,15 @@ export default function AppNotFound() {
         </p>
 
         <div className="mt-6 flex items-center justify-center gap-2">
-          <Link href="/dashboard">
-            <Button variant="primary" size="sm" icon={LayoutDashboard}>
-              Dashboard
-            </Button>
+          <Link href="/dashboard" className={`${LINK_BASE} cta-accent-gradient text-white`}>
+            <LayoutDashboard size={14} />
+            Dashboard
           </Link>
-          <Link href="/customers">
-            <Button variant="secondary" size="sm">
-              Customers
-            </Button>
+          <Link
+            href="/customers"
+            className={`${LINK_BASE} border border-line bg-surface text-ink-soft soft-elev hover:border-line-strong hover:text-ink`}
+          >
+            Customers
           </Link>
         </div>
       </div>
