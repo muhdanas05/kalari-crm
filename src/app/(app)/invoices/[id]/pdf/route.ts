@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { generateAndAttachInvoicePdf, signedInvoicePdfUrl } from "@/lib/pdf/store";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireProfile();
+  await requirePermission("invoices");
   const { id } = await params;
 
   const supabase = await createClient();

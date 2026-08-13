@@ -90,10 +90,15 @@ export async function setUserPermissions(
 ): Promise<Result> {
   await requireAdmin();
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({ permissions })
-    .eq("id", userId);
+  // Through admin_set_permissions(), not a direct table update: `authenticated`
+  // no longer holds update(permissions), because that grant plus
+  // profiles_self_update let any manager PATCH their own row straight against
+  // PostgREST and grant themselves everything (20260801260000). requireAdmin()
+  // here is the UI gate; is_admin() inside the RPC is the real one.
+  const { error } = await supabase.rpc("admin_set_permissions", {
+    p_user_id: userId,
+    p_permissions: permissions,
+  });
   if (error) return { ok: false, error: error.message };
   revalidatePath("/settings");
   return { ok: true };

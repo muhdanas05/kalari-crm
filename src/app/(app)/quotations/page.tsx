@@ -7,6 +7,7 @@ import { formatPaise } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { ChevronRight, Plus } from "@/components/icons";
 import { statusLabel, statusTone } from "@/lib/quotations/display";
+import { requirePermission } from "@/lib/auth/session";
 import { QuotationFilter } from "./QuotationFilter";
 
 export const metadata: Metadata = { title: "Quotations · Kalari" };
@@ -16,6 +17,7 @@ export default async function QuotationsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requirePermission("quotations");
   const { status } = await searchParams;
   const quotations = await listQuotations({ status });
 

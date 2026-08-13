@@ -75,7 +75,11 @@ export async function updateQuotation(
   await requireProfile();
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // `.select("id")` so a filter that matched NOTHING is distinguishable from a
+  // successful write. PostgREST returns 204-with-no-error for a zero-row
+  // update, so without this the UI toasted "updated" for an edit that never
+  // happened — e.g. someone else moved the quotation to accepted meanwhile.
+  const { data, error } = await supabase
     .from("quotations")
     .update({
       service_id: input.serviceId,
@@ -90,40 +94,67 @@ export async function updateQuotation(
       total_paise: input.totalPaise,
     })
     .eq("id", id)
-    .in("status", ["draft", "sent"]);
+    .in("status", ["draft", "sent"])
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) {
+    return {
+      ok: false,
+      error:
+        "This quotation is no longer editable — it may have been accepted, declined or converted in another tab. Reload to see where it stands.",
+    };
+  }
   revalidatePath(`/quotations/${id}`);
   revalidatePath("/quotations");
   return { ok: true };
 }
 
+/**
+ * A quotation is a sales artefact, not a tax document — nothing legal makes it
+ * one-way. accepted/declined/expired used to be dead ends, so one stray tap on
+ * an unconfirmed "Mark declined" killed a quotation permanently: Edit
+ * disappears outside draft|sent, leaving only Archive (itself irreversible).
+ *
+ * All three now walk back to `sent`, which is the state they came from.
+ * `converted` is the one genuine terminal: an invoice has been issued off it
+ * and that invoice is immutable, so un-converting would misrepresent the
+ * ledger. Correct a converted quotation by voiding its invoice instead.
+ */
 const NEXT_STATUS: Record<string, string[]> = {
   draft: ["sent", "declined"],
-  sent: ["accepted", "declined", "expired"],
-  accepted: [],
-  declined: [],
-  expired: [],
+  sent: ["draft", "accepted", "declined", "expired"],
+  accepted: ["sent"],
+  declined: ["sent"],
+  expired: ["sent"],
   converted: [],
 };
 
 export async function setQuotationStatus(
   id: string,
   from: string,
-  to: "sent" | "accepted" | "declined" | "expired",
+  to: "draft" | "sent" | "accepted" | "declined" | "expired",
 ): Promise<Result> {
   await requireProfile();
   if (!NEXT_STATUS[from]?.includes(to)) {
     return { ok: false, error: `Can't move a ${from} quotation to ${to}.` };
   }
   const supabase = await createClient();
-  const { error } = await supabase
+  // Compare-and-set, and check it actually matched — see updateQuotation.
+  const { data, error } = await supabase
     .from("quotations")
     .update({ status: to })
     .eq("id", id)
-    .eq("status", from);
+    .eq("status", from)
+    .select("id");
 
   if (error) return { ok: false, error: error.message };
+  if (!data?.length) {
+    return {
+      ok: false,
+      error: `This quotation is no longer "${from}" — someone else moved it. Reload to see where it stands.`,
+    };
+  }
   revalidatePath(`/quotations/${id}`);
   revalidatePath("/quotations");
   return { ok: true };

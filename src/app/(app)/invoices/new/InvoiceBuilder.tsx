@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, useId } from "react";
+import { useMemo, useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -21,6 +21,27 @@ import { cn } from "@/lib/utils";
 
 type Customer = { id: string; name: string; phone: string };
 
+/**
+ * A fresh idempotency key per SALE.
+ *
+ * This was `useId()` + customerId + serviceId, which looks like a key and is
+ * not one: useId() is derived from tree position, so it is identical on every
+ * render, every tab and every visit to this page. The key therefore collapsed
+ * to (customer, service) forever — and issue_invoice() treats a match on
+ * (customer_id, idempotency_key) as "already issued", returning the OLD
+ * invoice. A repeat sale of the same service to the same customer silently
+ * issued nothing, reported success, and navigated to the previous invoice.
+ *
+ * randomUUID needs a secure context; over a plain-http LAN address it is
+ * undefined, hence the fallback.
+ */
+function freshIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function InvoiceBuilder({
   services,
   rules,
@@ -37,7 +58,11 @@ export function InvoiceBuilder({
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
-  const idemBase = useId();
+  // Held in a ref so a RETRY after a failure reuses the same key (that is what
+  // idempotency is for), while a genuinely new sale gets a new one — see the
+  // regeneration after a successful issue below.
+  const idemRef = useRef<string>("");
+  if (!idemRef.current) idemRef.current = freshIdempotencyKey();
 
   const [customerId, setCustomerId] = useState(preselectedCustomerId ?? "");
   const [serviceId, setServiceId] = useState("");
@@ -78,11 +103,11 @@ export function InvoiceBuilder({
     // Re-deriving quantities would silently discard a rate the user typed. Only
     // recompute qty; keep edited rates.
     setLines((prev) =>
-      prev.map((l) => ({
-        ...l,
-        qty:
-          l.qty_rule === "per_person" ? Math.max(1, a + c) : 1,
-      })),
+      prev.map((l) =>
+        // Only per-person lines scale; anything else keeps the quantity that's
+        // there. The old `: 1` reset hand-edited quantities on every pax nudge.
+        l.qty_rule === "per_person" ? { ...l, qty: Math.max(1, a + c) } : l,
+      ),
     );
   };
 
@@ -117,13 +142,15 @@ export function InvoiceBuilder({
         lines: toDraftPayload(lines),
         amountNote: note || null,
         expectedTotalFils: totals.total_paise,
-        idempotencyKey: `${idemBase}:${customerId}:${custom ? "custom" : serviceId}`,
+        idempotencyKey: idemRef.current,
       });
 
       if (!res.ok) {
         setError(res.error);
         return;
       }
+      // That sale is done — the next one must not dedupe against it.
+      idemRef.current = freshIdempotencyKey();
       toast(`Invoice ${res.number} issued.`, "ok");
       router.push(`/invoices/${res.invoiceId}`);
     });
@@ -303,6 +330,18 @@ export function InvoiceBuilder({
                       Rate
                     </span>
                     <input
+                      /*
+                       * Keyed on the rate so the box remounts when state
+                       * changes underneath it. This input is uncontrolled, and
+                       * the blur handler sets .value imperatively, which trips
+                       * the DOM's dirty-value flag — after that a changed
+                       * defaultValue is IGNORED. So switching service, hitting
+                       * "Reset to catalogue", or deleting a row left the old
+                       * number sitting in the box while the totals used the
+                       * real one. Blurring a stale box then wrote that wrong
+                       * rate into a permanently immutable invoice.
+                       */
+                      key={`rate-${l.rate_paise}`}
                       defaultValue={formatPaiseBare(l.rate_paise)}
                       onBlur={(e) => {
                         const paise = parseInrToPaise(e.target.value);

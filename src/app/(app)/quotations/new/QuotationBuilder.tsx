@@ -90,10 +90,14 @@ export function QuotationBuilder({
     setAdults(a);
     setChildren(c);
     setLines((prev) =>
-      prev.map((l) => ({
-        ...l,
-        qty: l.qty_rule === "per_person" ? Math.max(1, a + c) : 1,
-      })),
+      prev.map((l) =>
+        // Only per-person lines scale. The old `: 1` CLOBBERED every other
+        // line's quantity — and because the edit page has to default every
+        // stored line to qty_rule "once" (the saved payload drops the rule),
+        // nudging the pax count on an existing quotation reset ALL quantities
+        // to 1 and collapsed the total to a fraction of itself.
+        l.qty_rule === "per_person" ? { ...l, qty: Math.max(1, a + c) } : l,
+      ),
     );
   };
 
@@ -306,6 +310,10 @@ export function QuotationBuilder({
                       Rate
                     </span>
                     <input
+                      /* Remount on rate change — see InvoiceBuilder for why:
+                         the imperative .value write sets the DOM dirty flag,
+                         after which defaultValue stops updating the display. */
+                      key={`rate-${l.rate_paise}`}
                       defaultValue={formatPaiseBare(l.rate_paise)}
                       onBlur={(e) => {
                         const paise = parseInrToPaise(e.target.value);

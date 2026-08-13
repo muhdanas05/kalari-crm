@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -11,6 +11,14 @@ import { recordPayment } from "./actions";
 import type { Database } from "@/lib/supabase/database.types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
+
+/** randomUUID needs a secure context; plain-http LAN access falls back. */
+function freshKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 // §5.5: cash / transfer / cheque. No card — online payments are out of scope.
 const METHODS: { value: PaymentMethod; label: string }[] = [
@@ -35,10 +43,23 @@ export function RecordPaymentButton({
   const [reference, setReference] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // One key per open of the dialog. A double-submit reuses it, so record_payment
-  // returns the existing payment instead of booking the money twice.
-  const idemBase = useId();
-  const [attempt, setAttempt] = useState(0);
+  // One key per OPEN of the dialog: a retry after a failure reuses it (so
+  // record_payment returns the existing payment instead of booking twice),
+  // while a genuine second payment on the same invoice gets a new one.
+  // Was useId() + attempt — useId() is tree-position-derived and identical on
+  // every render and every page load, so it was never a key at all.
+  const idemRef = useRef<string>("");
+
+  const openDialog = () => {
+    idemRef.current = freshKey();
+    // The outstanding prop changes after a partial payment, but this component
+    // never remounts, so the amount field kept its first value and pre-filled
+    // the FULL total on the second payment — straight into an overpayment.
+    setAmount(formatPaiseBare(outstandingFils));
+    setReference("");
+    setError(null);
+    setOpen(true);
+  };
 
   const submit = () => {
     const paise = parseInrToPaise(amount);
@@ -54,7 +75,7 @@ export function RecordPaymentButton({
         method,
         paidOn,
         reference,
-        idempotencyKey: `${idemBase}:${invoiceId}:${attempt}`,
+        idempotencyKey: idemRef.current,
       });
       if (!res.ok) {
         setError(res.error);
@@ -67,7 +88,6 @@ export function RecordPaymentButton({
         "ok",
       );
       setOpen(false);
-      setAttempt((a) => a + 1);
     });
   };
 
@@ -77,7 +97,7 @@ export function RecordPaymentButton({
         variant="primary"
         size="sm"
         icon={Banknote}
-        onClick={() => setOpen(true)}
+        onClick={openDialog}
       >
         Record payment
       </Button>

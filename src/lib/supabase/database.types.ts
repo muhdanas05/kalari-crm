@@ -1444,6 +1444,7 @@ export type Database = {
           amount_paise: number
           created_at: string
           id: string
+          idempotency_key: string | null
           invoice_id: string
           method: Database["public"]["Enums"]["payment_method"]
           number: string | null
@@ -1460,6 +1461,7 @@ export type Database = {
           amount_paise: number
           created_at?: string
           id?: string
+          idempotency_key?: string | null
           invoice_id: string
           method: Database["public"]["Enums"]["payment_method"]
           number?: string | null
@@ -1476,6 +1478,7 @@ export type Database = {
           amount_paise?: number
           created_at?: string
           id?: string
+          idempotency_key?: string | null
           invoice_id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           number?: string | null
@@ -2248,19 +2251,18 @@ export type Database = {
       }
     }
     Functions: {
-      admin_set_user:
-        | {
-            Args: { p_active?: boolean; p_user_id: string }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_active?: boolean
-              p_role?: Database["public"]["Enums"]["user_role"]
-              p_user_id: string
-            }
-            Returns: undefined
-          }
+      admin_set_permissions: {
+        Args: { p_permissions: string[]; p_user_id: string }
+        Returns: undefined
+      }
+      admin_set_user: {
+        Args: {
+          p_active?: boolean
+          p_role?: Database["public"]["Enums"]["user_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       archive_case: { Args: { p_case_id: string }; Returns: undefined }
       archive_customer: { Args: { p_customer_id: string }; Returns: undefined }
       archive_supplier: { Args: { p_supplier_id: string }; Returns: undefined }
@@ -2446,6 +2448,15 @@ export type Database = {
         }[]
       }
       today_kolkata: { Args: never; Returns: string }
+      unarchive_case: { Args: { p_case_id: string }; Returns: undefined }
+      unarchive_customer: {
+        Args: { p_customer_id: string }
+        Returns: undefined
+      }
+      unarchive_supplier: {
+        Args: { p_supplier_id: string }
+        Returns: undefined
+      }
       upsert_customer_passport: {
         Args: {
           p_ciphertext: string

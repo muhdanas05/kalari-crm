@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
-import { requireProfile } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { getHistory, getAutomationHealth } from "@/lib/db/automations";
 import { formatDateTime } from "@/lib/dates";
 import { AlertTriangle, Zap, Mail, PhoneCall, FileText } from "@/components/icons";
@@ -28,7 +28,7 @@ export default async function HistoryPage({
 }: {
   searchParams: Promise<{ source?: string; errors?: string }>;
 }) {
-  await requireProfile();
+  await requirePermission("history");
   const sp = await searchParams;
   const errorsOnly = sp.errors === "1";
 

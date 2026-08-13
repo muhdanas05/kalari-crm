@@ -7,6 +7,20 @@ import { createClient } from "@/lib/supabase/server";
 export type LoginState = { error: string | null };
 
 /**
+ * `next` arrives from a query param, so it is attacker-controlled. Without this
+ * check, /login?next=https://evil.example renders the genuine login page and
+ * then hands the freshly-signed-in user to another origin — a credential-
+ * phishing lever aimed at exactly the handful of staff accounts that exist.
+ *
+ * Only a site-relative single-slash path is allowed. `//evil.example` is a
+ * protocol-relative URL, which is why the second character is checked too.
+ */
+function safeNext(raw: string): string {
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
+/**
  * Sign in. ARCHITECTURE.md §3.20: no self-signup — the admin creates users, so
  * there is deliberately no sign-up action in this file.
  */
@@ -16,7 +30,7 @@ export async function signIn(
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/dashboard");
+  const next = safeNext(String(formData.get("next") ?? "/dashboard"));
 
   if (!email || !password) {
     return { error: "Enter your email and password." };

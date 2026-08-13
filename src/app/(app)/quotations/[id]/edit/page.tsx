@@ -6,6 +6,7 @@ import { listCustomers } from "@/lib/db/customers";
 import { getQuotationDetail } from "@/lib/db/quotations";
 import { QuotationBuilder, type ExistingQuotation } from "../../new/QuotationBuilder";
 import type { DraftLine } from "@/lib/pricing/engine";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Edit quotation · Kalari" };
 
@@ -14,6 +15,7 @@ export default async function EditQuotationPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("quotations");
   const { id } = await params;
   const [detail, { services, rules }, customers] = await Promise.all([
     getQuotationDetail(id),

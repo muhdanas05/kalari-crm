@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHead } from "@/components/PageHead";
 import { listSuppliers } from "@/lib/db/suppliers";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, requirePermission } from "@/lib/auth/session";
 import { ChevronRight, Mail, Phone } from "@/components/icons";
 import { SupplierFormModal } from "./SupplierFormModal";
 
@@ -13,6 +13,7 @@ export default async function SuppliersPage({
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  await requirePermission("suppliers");
   const { q } = await searchParams;
   const [profile, suppliers] = await Promise.all([getProfile(), listSuppliers({ q })]);
 

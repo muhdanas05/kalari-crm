@@ -4,24 +4,27 @@ import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
 import { listCustomers, listCustomerCategories } from "@/lib/db/customers";
 import { getCatalogue } from "@/lib/db/catalogue";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, requirePermission } from "@/lib/auth/session";
 import { formatDate } from "@/lib/dates";
 import { ChevronRight, Mail, PhoneOff } from "@/components/icons";
 import { CustomerSearch } from "./CustomerSearch";
 import { CustomerCategoryFilter } from "./CustomerCategoryFilter";
 import { NewLeadButton } from "./NewLeadButton";
+import { RestoreButton } from "./RestoreButton";
 
 export const metadata: Metadata = { title: "Customers · Kalari" };
 
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; archived?: string }>;
 }) {
-  const { q, category } = await searchParams;
+  await requirePermission("customers");
+  const { q, category, archived } = await searchParams;
+  const showArchived = archived === "1";
   const [profile, customers, categories, catalogue] = await Promise.all([
     getProfile(),
-    listCustomers({ q, category }),
+    listCustomers({ q, category, archived: showArchived }),
     listCustomerCategories(),
     getCatalogue(),
   ]);
@@ -46,17 +49,40 @@ export default async function CustomersPage({
         q={q}
       />
 
+      {/* Archived rows are hidden from every list, so without this door there
+          is no way to reach anything you archived — nor to undo it. */}
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href={showArchived ? "/customers" : "/customers?archived=1"}
+          className="text-[12px] font-semibold text-accent hover:underline"
+        >
+          {showArchived ? "← Back to active customers" : "View archived"}
+        </Link>
+        {showArchived && (
+          <span className="text-[11.5px] font-medium text-ink-faint">
+            Showing archived only
+          </span>
+        )}
+      </div>
+
       {customers.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line py-12 text-center text-[13px] font-medium text-ink-faint">
-          {q ? `Nothing matches “${q}”.` : "No customers yet."}
+          {showArchived
+            ? "Nothing archived."
+            : q
+              ? `Nothing matches “${q}”.`
+              : "No customers yet."}
         </p>
       ) : (
         <ul className="overflow-hidden rounded-xl border border-line bg-surface">
           {customers.map((c) => (
-            <li key={c.id} className="border-b border-line last:border-0">
+            <li
+              key={c.id}
+              className="flex items-center gap-2 border-b border-line pr-3 last:border-0"
+            >
               <Link
                 href={`/customers/${c.id}`}
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
+                className="flex flex-1 items-center gap-3 px-4 py-3 transition-colors hover:bg-paper"
               >
                 <div className="min-w-0 flex-1">
                   <span className="block truncate text-[13.5px] font-bold text-ink">
@@ -96,6 +122,7 @@ export default async function CustomersPage({
                 </span>
                 <ChevronRight size={15} className="shrink-0 text-ink-ghost" />
               </Link>
+              {showArchived && <RestoreButton kind="customer" id={c.id} />}
             </li>
           ))}
         </ul>

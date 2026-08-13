@@ -6,10 +6,12 @@ import { listPayments } from "@/lib/db/invoices";
 import { formatPaise, formatPaiseCompact } from "@/lib/money";
 import { formatDate, todayKolkata } from "@/lib/dates";
 import { Banknote, ChevronRight } from "@/components/icons";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Payments · Kalari" };
 
 export default async function PaymentsPage() {
+  await requirePermission("payments");
   const payments = await listPayments();
   const monthStart = todayKolkata().slice(0, 8) + "01";
 

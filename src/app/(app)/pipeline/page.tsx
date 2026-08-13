@@ -9,6 +9,7 @@ import { listPipelineServices, getServiceStagePath } from "@/lib/db/stages";
 import { Board } from "@/components/board/Board";
 import { CaseList } from "@/components/board/CaseList";
 import { PipelineSelector, LEADS_VALUE } from "./PipelineSelector";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Pipeline · Kalari" };
 
@@ -17,6 +18,7 @@ export default async function PipelinePage({
 }: {
   searchParams: Promise<{ service?: string; view?: string }>;
 }) {
+  await requirePermission("pipeline");
   const sp = await searchParams;
   const view = sp.view === "board" ? "board" : sp.view === "list" ? "list" : null;
 

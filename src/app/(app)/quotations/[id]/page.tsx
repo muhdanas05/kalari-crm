@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/dates";
 import { FileText, Pencil, UserSquare2 } from "@/components/icons";
 import { StatusActions } from "./StatusActions";
 import type { DraftLine } from "@/lib/pricing/engine";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Quotation · Kalari" };
 
@@ -18,6 +19,7 @@ export default async function QuotationDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("quotations");
   const { id } = await params;
   const detail = await getQuotationDetail(id);
   if (!detail) notFound();

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHead } from "@/components/PageHead";
 import { Tag } from "@/components/ui/Tag";
 import { getInvoiceDetail, statusLabel, statusTone } from "@/lib/db/invoices";
-import { getProfile, hasPermission } from "@/lib/auth/session";
+import { getProfile, hasPermission, requirePermission } from "@/lib/auth/session";
 import { formatPaise, formatPaiseBare, isRateEdited } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { Lock, UserSquare2, FileText } from "@/components/icons";
@@ -19,6 +19,7 @@ export default async function InvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("invoices");
   const { id } = await params;
   const [detail, profile] = await Promise.all([getInvoiceDetail(id), getProfile()]);
   if (!detail) notFound();

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { Send, Check, X, Ban, FileCheck } from "@/components/icons";
+import { Send, Check, X, Ban, FileCheck, Undo2 } from "@/components/icons";
 import { setQuotationStatus, convertQuotation, archiveQuotation } from "../actions";
 
 export function StatusActions({
@@ -21,12 +21,14 @@ export function StatusActions({
   const toast = useToast();
   const [pending, start] = useTransition();
   const [confirmConvert, setConfirmConvert] = useState(false);
+  const [confirmDecline, setConfirmDecline] = useState(false);
 
-  const move = (to: "sent" | "accepted" | "declined" | "expired") => {
+  const move = (to: "draft" | "sent" | "accepted" | "declined" | "expired") => {
     start(async () => {
       const res = await setQuotationStatus(id, status, to);
       if (!res.ok) return toast(res.error, "error");
       toast(`Marked ${to}.`, "ok");
+      setConfirmDecline(false);
     });
   };
 
@@ -55,13 +57,16 @@ export function StatusActions({
           Mark sent
         </Button>
       )}
-      {(status === "draft" || status === "sent") && (
+      {/* Only from "sent" — a draft can't be accepted, and offering it here
+          rendered a button that always failed with "Can't move a draft
+          quotation to accepted." */}
+      {status === "sent" && (
         <Button variant="secondary" size="sm" icon={Check} onClick={() => move("accepted")} disabled={pending}>
           Mark accepted
         </Button>
       )}
       {(status === "draft" || status === "sent") && (
-        <Button variant="ghost" size="sm" icon={X} onClick={() => move("declined")} disabled={pending}>
+        <Button variant="ghost" size="sm" icon={X} onClick={() => setConfirmDecline(true)} disabled={pending}>
           Mark declined
         </Button>
       )}
@@ -70,6 +75,41 @@ export function StatusActions({
           Mark expired
         </Button>
       )}
+
+      {/* The way back. These were dead ends, so one mis-tap ended the
+          quotation permanently — Edit is hidden outside draft|sent. */}
+      {["accepted", "declined", "expired"].includes(status) && (
+        <Button variant="secondary" size="sm" icon={Undo2} onClick={() => move("sent")} disabled={pending}>
+          Reopen
+        </Button>
+      )}
+      {status === "sent" && (
+        <Button variant="ghost" size="sm" icon={Undo2} onClick={() => move("draft")} disabled={pending}>
+          Back to draft
+        </Button>
+      )}
+
+      <Modal
+        open={confirmDecline}
+        onClose={() => !pending && setConfirmDecline(false)}
+        title="Mark this quotation declined?"
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setConfirmDecline(false)} disabled={pending}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => move("declined")} disabled={pending}>
+              {pending ? "Saving…" : "Mark declined"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-[13px] font-medium text-ink">
+          The customer turned this down. You can reopen it later if they change
+          their mind — nothing is lost.
+        </p>
+      </Modal>
       {status === "accepted" && (
         <>
           <Button variant="primary" size="sm" icon={FileCheck} onClick={() => setConfirmConvert(true)} disabled={pending}>

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireProfile } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { getPaymentForReceipt } from "@/lib/db/invoices";
 import { renderReceiptPdf } from "@/lib/pdf/receipt";
 
@@ -19,7 +19,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireProfile();
+  await requirePermission("payments");
   const { id } = await params;
 
   const detail = await getPaymentForReceipt(id);

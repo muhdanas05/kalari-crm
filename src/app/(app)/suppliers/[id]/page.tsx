@@ -5,7 +5,7 @@ import { PageHead } from "@/components/PageHead";
 import { EdList } from "@/components/ui/EdList";
 import { Tag } from "@/components/ui/Tag";
 import { getSupplierDetail } from "@/lib/db/suppliers";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, requirePermission } from "@/lib/auth/session";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ChevronRight, Mail, Send } from "@/components/icons";
 import { SupplierFormModal } from "../SupplierFormModal";
@@ -18,6 +18,7 @@ export default async function SupplierPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("suppliers");
   const { id } = await params;
   const [profile, detail] = await Promise.all([getProfile(), getSupplierDetail(id)]);
   if (!detail) notFound();

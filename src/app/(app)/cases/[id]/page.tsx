@@ -13,6 +13,7 @@ import { AlertTriangle, PhoneCall, UserSquare2, Truck } from "@/components/icons
 import { SupplierControls } from "./SupplierControls";
 import { ArchiveEntityButton } from "../../ArchiveEntityButton";
 import { FileText } from "@/components/icons";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Case · Kalari" };
 
@@ -21,6 +22,8 @@ export default async function CasePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // A case is a pipeline row; the Pipeline tab is what grants it.
+  await requirePermission("pipeline");
   const { id } = await params;
   const [c, supplier, suppliers] = await Promise.all([
     getCase(id),

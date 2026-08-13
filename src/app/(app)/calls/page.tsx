@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/PageHead";
 import { getAllCallTasks } from "@/lib/db/calls";
-import { requireProfile } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listCustomers } from "@/lib/db/customers";
 import { CallList } from "./CallList";
 import { NewCallButton } from "./NewCallButton";
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Call queue · Kalari" };
  * telecom regulator, a carrier, or a platform's approval.
  */
 export default async function CallsPage() {
-  await requireProfile();
+  await requirePermission("calls");
 
   const [tasks, customers] = await Promise.all([
     getAllCallTasks(),

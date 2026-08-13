@@ -10,7 +10,7 @@ import { formatPaise } from "@/lib/money";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { ChevronRight, PhoneCall, Mail, AlertTriangle } from "@/components/icons";
 import { PortalLink } from "./PortalLink";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, requirePermission } from "@/lib/auth/session";
 import { ArchiveEntityButton } from "../../ArchiveEntityButton";
 
 export const metadata: Metadata = { title: "Customer · Kalari" };
@@ -20,6 +20,7 @@ export default async function CustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("customers");
   const { id } = await params;
   const detail = await getCustomerDetail(id);
   // Not found, or RLS says it isn't yours — same answer either way. Don't

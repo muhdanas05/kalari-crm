@@ -6,7 +6,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { listInvoices, statusLabel, statusTone } from "@/lib/db/invoices";
 import { formatPaise, formatPaiseCompact } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
-import { getProfile } from "@/lib/auth/session";
+import { getProfile, requirePermission } from "@/lib/auth/session";
 import { ChevronRight, Plus, FileText, Banknote, AlertTriangle } from "@/components/icons";
 import { InvoiceFilter } from "./InvoiceFilter";
 
@@ -17,6 +17,7 @@ export default async function InvoicesPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requirePermission("invoices");
   const { status } = await searchParams;
   const [profile, invoices] = await Promise.all([
     getProfile(),

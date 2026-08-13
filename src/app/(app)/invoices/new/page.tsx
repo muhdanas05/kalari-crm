@@ -3,6 +3,7 @@ import { PageHead } from "@/components/PageHead";
 import { getCatalogue } from "@/lib/db/catalogue";
 import { listCustomers } from "@/lib/db/customers";
 import { InvoiceBuilder } from "./InvoiceBuilder";
+import { requirePermission } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "New invoice · Kalari" };
 
@@ -11,6 +12,7 @@ export default async function NewInvoicePage({
 }: {
   searchParams: Promise<{ customer?: string; case?: string }>;
 }) {
+  await requirePermission("invoices");
   const sp = await searchParams;
   const [{ services, rules }, customers] = await Promise.all([
     getCatalogue(),

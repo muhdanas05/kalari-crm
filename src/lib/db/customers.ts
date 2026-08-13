@@ -3,17 +3,26 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type Customer = Database["public"]["Tables"]["customers"]["Row"];
 
-/** Customers list. */
+/**
+ * Customers list.
+ *
+ * `archived: true` shows the archived ones INSTEAD of the live ones — the only
+ * way to find something you archived by mistake, and therefore the only way
+ * the restore action is reachable.
+ */
 export async function listCustomers(
-  opts: { q?: string; category?: string; limit?: number } = {},
+  opts: { q?: string; category?: string; limit?: number; archived?: boolean } = {},
 ) {
   const supabase = await createClient();
   let query = supabase
     .from("customers")
-    .select("id, name, phone, email, category, nationality, source, created_at")
-    .is("archived_at", null)
+    .select("id, name, phone, email, category, nationality, source, created_at, archived_at")
     .order("created_at", { ascending: false })
     .limit(opts.limit ?? 100);
+
+  query = opts.archived
+    ? query.not("archived_at", "is", null)
+    : query.is("archived_at", null);
 
   if (opts.category) query = query.eq("category", opts.category);
 

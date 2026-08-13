@@ -37,6 +37,37 @@ export async function archiveEntity(
 
   if (error) return { ok: false, error: error.message };
 
+  revalidateFor(kind);
+  return { ok: true };
+}
+
+/**
+ * The way back. Archiving used to be one-way in practice: nothing in the app
+ * could clear `archived_at`, and every list hides archived rows, so a mis-click
+ * made a customer permanently untypeable. Same admin gate as archiving, same
+ * definer-RPC path (20260801280000).
+ */
+export async function unarchiveEntity(
+  kind: ArchiveKind,
+  id: string,
+): Promise<ArchiveResult> {
+  await requireProfile();
+  const supabase = await createClient();
+
+  const { error } =
+    kind === "customer"
+      ? await supabase.rpc("unarchive_customer", { p_customer_id: id })
+      : kind === "case"
+        ? await supabase.rpc("unarchive_case", { p_case_id: id })
+        : await supabase.rpc("unarchive_supplier", { p_supplier_id: id });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidateFor(kind);
+  return { ok: true };
+}
+
+function revalidateFor(kind: ArchiveKind) {
   if (kind === "customer") {
     revalidatePath("/customers");
     revalidatePath("/calls");
@@ -47,6 +78,4 @@ export async function archiveEntity(
     revalidateTag("suppliers");
     revalidatePath("/suppliers");
   }
-
-  return { ok: true };
 }
