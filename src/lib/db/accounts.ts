@@ -20,6 +20,13 @@ export type LedgerEntry = {
   ref: string | null;
   /** Money-in rows link back to their invoice. */
   invoice_id: string | null;
+  /**
+   * What the edit form needs, on money-out rows only. saveExpense() has always
+   * branched on `input.id`, but nothing ever passed one — so a ₹50,000 typo
+   * for ₹5,000 was permanent in the P&L. Null on money-in rows: a payment is
+   * corrected by voiding it, never by editing.
+   */
+  expense: { supplier_id: string | null; notes: string | null } | null;
 };
 
 /** First day of the month containing `date` (a YYYY-MM-DD calendar date). */
@@ -64,7 +71,7 @@ export async function listLedger({
       .limit(LIMIT),
     supabase
       .from("expenses")
-      .select("id, spent_on, amount_paise, method, category, description, suppliers(name)")
+      .select("id, spent_on, amount_paise, method, category, description, notes, supplier_id, suppliers(name)")
       .is("archived_at", null)
       .gte("spent_on", from)
       .lte("spent_on", to)
@@ -88,6 +95,7 @@ export async function listLedger({
       method: p.method,
       ref: p.number,
       invoice_id: p.invoice_id,
+      expense: null,
     };
   });
 
@@ -103,6 +111,7 @@ export async function listLedger({
       method: e.method,
       ref: supplier?.name ?? null,
       invoice_id: null,
+      expense: { supplier_id: e.supplier_id, notes: e.notes },
     };
   });
 

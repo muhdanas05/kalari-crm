@@ -17,6 +17,7 @@ import {
   ChevronRight,
 } from "@/components/icons";
 import { ExpenseFormModal } from "./ExpenseFormModal";
+import { ExpenseRowActions } from "./ExpenseRowActions";
 
 export const metadata: Metadata = { title: "Accounts · Kalari" };
 
@@ -151,7 +152,12 @@ export default async function AccountsPage({
                 </div>
 
                 {rows.map((r) => (
-                  <LedgerRow key={`${r.kind}-${r.id}`} entry={r} />
+                  <LedgerRow
+                    key={`${r.kind}-${r.id}`}
+                    entry={r}
+                    today={to}
+                    suppliers={suppliers.map((s) => ({ id: s.id, name: s.name }))}
+                  />
                 ))}
               </div>
             );
@@ -162,7 +168,15 @@ export default async function AccountsPage({
   );
 }
 
-function LedgerRow({ entry }: { entry: LedgerEntry }) {
+function LedgerRow({
+  entry,
+  today,
+  suppliers,
+}: {
+  entry: LedgerEntry;
+  today: string;
+  suppliers: { id: string; name: string }[];
+}) {
   const isIn = entry.kind === "in";
   const body = (
     <>
@@ -198,7 +212,29 @@ function LedgerRow({ entry }: { entry: LedgerEntry }) {
           <ChevronRight size={15} className="mt-0.5 shrink-0 text-ink-ghost" />
         </Link>
       ) : (
-        <div className="flex items-start gap-3 px-4 py-2.5 pr-[35px]">{body}</div>
+        <div className="flex items-start gap-3 px-4 py-2.5">
+          {body}
+          {/* Money out is correctable; money in is corrected by voiding the
+              payment, which lives on the invoice. */}
+          {entry.expense ? (
+            <ExpenseRowActions
+              today={today}
+              suppliers={suppliers}
+              expense={{
+                id: entry.id,
+                spent_on: entry.date,
+                category: entry.label,
+                amount_paise: entry.amount_paise,
+                method: entry.method,
+                supplier_id: entry.expense.supplier_id,
+                description: entry.sublabel,
+                notes: entry.expense.notes,
+              }}
+            />
+          ) : (
+            <span className="w-[35px] shrink-0" />
+          )}
+        </div>
       )}
     </div>
   );

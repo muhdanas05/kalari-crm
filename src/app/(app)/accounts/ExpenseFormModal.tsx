@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { Plus } from "@/components/icons";
+import { Plus, Pencil } from "@/components/icons";
 import { parseInrToPaise } from "@/lib/money";
 import { saveExpense, type ExpenseInput } from "./actions";
 import type { PaymentMethod } from "@/lib/db/accounts";
@@ -37,23 +37,59 @@ function blankForm(today: string): Form {
   };
 }
 
+/** The subset of an expense row this form can edit. */
+export type EditableExpense = {
+  id: string;
+  spent_on: string;
+  category: string;
+  amount_paise: number;
+  method: PaymentMethod;
+  supplier_id: string | null;
+  description: string | null;
+  notes: string | null;
+};
+
+function formFor(e: EditableExpense): Form {
+  return {
+    id: e.id,
+    spentOn: e.spent_on,
+    category: e.category,
+    // Plain rupees, no thousands separators — parseInrToPaise round-trips it.
+    amount: (e.amount_paise / 100).toFixed(2),
+    method: e.method,
+    supplierId: e.supplier_id ?? "",
+    description: e.description ?? "",
+    notes: e.notes ?? "",
+  };
+}
+
+/**
+ * Add OR edit. saveExpense() has always branched on `input.id`, but nothing
+ * ever passed one — an expense was record-only, so a ₹50,000 typo for ₹5,000
+ * was permanent in the P&L. `expense` supplies that id.
+ */
 export function ExpenseFormModal({
   today,
   suppliers,
+  expense,
 }: {
   today: string;
   suppliers: { id: string; name: string }[];
+  expense?: EditableExpense;
 }) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const [form, setForm] = useState<Form>(() => blankForm(today));
+  const [form, setForm] = useState<Form>(() =>
+    expense ? formFor(expense) : blankForm(today),
+  );
   const [error, setError] = useState<string | null>(null);
+  const editing = !!expense;
 
   // Reset on every open — otherwise a cancelled half-typed expense is sitting
   // there next time, and the wrong amount silently becomes the default.
   const openForm = () => {
-    setForm(blankForm(today));
+    setForm(expense ? formFor(expense) : blankForm(today));
     setError(null);
     setOpen(true);
   };
@@ -77,7 +113,7 @@ export function ExpenseFormModal({
           setError(res.error);
           return;
         }
-        toast("Expense recorded.", "ok");
+        toast(editing ? "Expense updated." : "Expense recorded.", "ok");
         setOpen(false);
       } catch {
         // A thrown Server Action call — e.g. a build changed under an open tab —
@@ -89,14 +125,20 @@ export function ExpenseFormModal({
 
   return (
     <>
-      <Button variant="primary" size="sm" icon={Plus} onClick={openForm}>
-        Add expense
-      </Button>
+      {editing ? (
+        <Button variant="ghost" size="sm" icon={Pencil} onClick={openForm}>
+          Edit
+        </Button>
+      ) : (
+        <Button variant="primary" size="sm" icon={Plus} onClick={openForm}>
+          Add expense
+        </Button>
+      )}
 
       <Modal
         open={open}
         onClose={() => !pending && setOpen(false)}
-        title="Add expense"
+        title={editing ? "Edit expense" : "Add expense"}
         description="Money out. Shows in the account book against the day it was spent."
         size="md"
         footer={
