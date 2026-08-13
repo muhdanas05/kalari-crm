@@ -1,0 +1,22 @@
+-- ============================================================================
+-- Fix: admin_set_user() had two live overloads, so calling it with just
+-- (p_user_id, p_active) — exactly what the Active toggle in Settings -> Users
+-- does — was ambiguous to Postgres: both admin_set_user(uuid, boolean) and
+-- admin_set_user(uuid, boolean, user_role) match, and it refuses to guess.
+--
+-- 20260731100000_single_admin_prep.sql dropped the ORIGINAL 4-arg signature
+-- and created a 2-arg one (uuid, boolean). 20260801110000_reintroduce_manager_role.sql
+-- then added role back as a 3rd trailing-default param — but as a genuinely
+-- NEW overload (create or replace does not replace a function with a
+-- different signature), leaving the 2-arg version from single_admin_prep
+-- still live alongside it. That migration's own comment ("nothing currently
+-- calls the old one... so no drop is needed") was the bug: PostgREST calls
+-- by name with a JSON object of named args, and Postgres resolves overloads
+-- by matching argument names/defaults — a 2-key call matches BOTH.
+--
+-- Fix: drop the 2-arg overload. The 3-arg one is a strict superset (p_role
+-- defaults to null, and the body does `role = coalesce(p_role, role)`), so
+-- every existing 2-arg call site keeps working unchanged.
+-- ============================================================================
+
+drop function if exists public.admin_set_user(uuid, boolean);
