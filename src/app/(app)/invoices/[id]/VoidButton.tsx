@@ -17,9 +17,9 @@ import { voidInvoice, voidPayment, cancelInvoiceWithRefund } from "./void-action
  * dialog, but it's explicit that voiding every payment IS the refund, and
  * calls cancel_invoice_with_refund() instead of the plain void.
  *
- * A reason is mandatory because a void is the one thing in the ledger that
- * rewrites what a document means, and "why" is the only part that cannot be
- * reconstructed later from the rows.
+ * The reason is optional. It used to be a hard 3-character minimum on both
+ * sides, which meant the button simply refused to do anything until you'd
+ * typed enough — the RPCs now substitute a default when it's blank.
  */
 export function VoidButton(
   props:
@@ -42,10 +42,9 @@ export function VoidButton(
   };
 
   const submit = () => {
-    if (reason.trim().length < 3) {
-      setError("Say why — this is permanent and it will be read later.");
-      return;
-    }
+    // No minimum. The reason is optional — the RPCs fill in a default when it
+    // is blank, so the button never refuses to act on the strength of a
+    // free-text field.
     setError(null);
     start(async () => {
       const res = withRefund
@@ -124,7 +123,7 @@ export function VoidButton(
 
           <label className="flex flex-col gap-1.5">
             <span className="text-[11px] font-bold uppercase tracking-[1px] text-ink-mid">
-              Reason (required)
+              Reason (optional)
             </span>
             <textarea
               value={reason}

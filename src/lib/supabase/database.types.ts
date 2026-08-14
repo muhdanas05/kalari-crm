@@ -2373,6 +2373,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      edit_issued_invoice: {
+        Args: {
+          p_amount_note: string
+          p_due_date: string
+          p_expected_total_paise: number
+          p_invoice_id: string
+          p_lines: Json
+          p_pax_adults: number
+          p_pax_children: number
+          p_reason?: string
+        }
+        Returns: {
+          invoice_id: string
+          number: string
+          total_paise: number
+        }[]
+      }
       has_email_consent: { Args: { p_customer_id: string }; Returns: boolean }
       has_permission: { Args: { p_page: string }; Returns: boolean }
       is_active_user: { Args: never; Returns: boolean }

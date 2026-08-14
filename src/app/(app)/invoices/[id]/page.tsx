@@ -7,7 +7,7 @@ import { getInvoiceDetail, statusLabel, statusTone } from "@/lib/db/invoices";
 import { getProfile, hasPermission, requirePermission } from "@/lib/auth/session";
 import { formatPaise, formatPaiseBare, isRateEdited } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
-import { Lock, UserSquare2, FileText } from "@/components/icons";
+import { Lock, UserSquare2, FileText, Pencil } from "@/components/icons";
 import { RecordPaymentButton } from "./RecordPaymentButton";
 import { EmailInvoiceButton } from "./EmailInvoiceButton";
 import { VoidButton } from "./VoidButton";
@@ -57,6 +57,15 @@ export default async function InvoicePage({
                 outstandingFils={outstanding}
               />
             )}
+            {!voided && hasPermission(profile, "invoices") && (
+              <Link
+                href={`/invoices/${invoice.id}/edit`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-line-strong hover:text-ink"
+              >
+                <Pencil size={14} />
+                Edit
+              </Link>
+            )}
             {/* Void needs the 'invoices' permission, and the RPC refuses once money is against it (plain void — cancel-with-refund handles that case). */}
             {!voided && hasPermission(profile, "invoices") && (
               <VoidButton
@@ -71,15 +80,15 @@ export default async function InvoicePage({
       />
 
       {/*
-        §3.7: issued invoices are immutable. Corrections are void-and-reissue or
-        a credit note. Say so in the product — an office that believes it can
-        edit an invoice will try, and the refusal should not be a surprise.
+        Issued invoices ARE editable now (owner's call — this is his own book).
+        Only the invoice number is pinned, because two documents must never be
+        able to claim the same one.
       */}
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-paper px-5 py-3">
         <Lock size={14} className="shrink-0 text-ink-faint" />
         <p className="flex-1 text-[12.5px] font-medium text-ink-mid">
-          Issued documents can't be edited. A correction is a void and reissue, or
-          a credit note.
+          {invoice.number} is permanent — the number never changes or gets
+          reused. The lines, totals, dates and travellers can all be edited.
         </p>
         <Tag tone={statusTone(invoice.display_status)}>
           {statusLabel(invoice.display_status)}
