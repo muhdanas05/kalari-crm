@@ -8,7 +8,7 @@ export type VoidResult = { ok: true } | { ok: false; error: string };
 
 /**
  * Void an invoice. The RPC does the real gatekeeping — the 'invoices'
- * permission, reason required, and it REFUSES an invoice with payments
+ * permission, and it REFUSES an invoice with payments
  * against it (that path is a credit note, because a payment must never
  * point at a document that no longer stands). requirePermission here is the
  * UI-side echo of the same rule, so an unpermitted user gets a clean
@@ -23,10 +23,6 @@ export async function voidInvoice(
   reason: string,
 ): Promise<VoidResult> {
   await requirePermission("invoices");
-
-  if (reason.trim().length < 3) {
-    return { ok: false, error: "Say why this invoice is being voided." };
-  }
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("void_invoice", {
@@ -48,18 +44,15 @@ export async function voidInvoice(
  * voidInvoice() above refuses. Voids every live payment (the refund: money
  * that was "collected" no longer counts as such anywhere it's read from —
  * dashboard, Accounts, invoices_v.outstanding_paise) and the invoice, in one
- * database transaction. Same guarantees: the 'invoices' permission, reason
- * required, number stays consumed, nothing deleted.
+ * database transaction. Same guarantees: the 'invoices' permission,
+ * number stays consumed, nothing deleted. The reason is optional — the RPC
+ * substitutes a default when it's blank.
  */
 export async function cancelInvoiceWithRefund(
   invoiceId: string,
   reason: string,
 ): Promise<VoidResult> {
   await requirePermission("invoices");
-
-  if (reason.trim().length < 3) {
-    return { ok: false, error: "Say why this invoice is being cancelled." };
-  }
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_invoice_with_refund", {
@@ -90,10 +83,6 @@ export async function voidPayment(
   reason: string,
 ): Promise<VoidResult> {
   await requirePermission("invoices");
-
-  if (reason.trim().length < 3) {
-    return { ok: false, error: "Say why this payment is being voided." };
-  }
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("void_payment", {
