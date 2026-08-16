@@ -2542,7 +2542,7 @@ export type Database = {
         | "email.failed"
         | "case.input_needed"
       invoice_lifecycle: "issued" | "void"
-      payment_method: "cash" | "transfer" | "cheque"
+      payment_method: "cash" | "transfer" | "cheque" | "upi"
       qty_rule: "once" | "once_per_file" | "per_person"
       service_category: "haj" | "umrah" | "standard" | "premium"
       service_family:
@@ -2738,7 +2738,7 @@ export const Constants = {
         "case.input_needed",
       ],
       invoice_lifecycle: ["issued", "void"],
-      payment_method: ["cash", "transfer", "cheque"],
+      payment_method: ["cash", "transfer", "cheque", "upi"],
       qty_rule: ["once", "once_per_file", "per_person"],
       service_category: ["haj", "umrah", "standard", "premium"],
       service_family: [

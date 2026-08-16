@@ -20,9 +20,13 @@ function freshKey(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-// §5.5: cash / transfer / cheque. No card — online payments are out of scope.
+// How money actually arrives. UPI is separate from "transfer" on purpose —
+// recording it as a bank transfer makes the account book unable to answer
+// "how much came in by UPI", which is most of it. No card: the app takes no
+// online payments, it only records ones that already happened.
 const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "cash", label: "Cash" },
+  { value: "upi", label: "UPI" },
   { value: "transfer", label: "Transfer" },
   { value: "cheque", label: "Cheque" },
 ];

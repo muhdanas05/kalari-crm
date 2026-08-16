@@ -16,6 +16,7 @@ import {
   BookOpen,
   ChevronRight,
 } from "@/components/icons";
+import { paymentMethodLabel } from "@/lib/invoices/display";
 import { ExpenseFormModal } from "./ExpenseFormModal";
 import { ExpenseRowActions } from "./ExpenseRowActions";
 
@@ -189,7 +190,7 @@ function LedgerRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-bold text-ink">{entry.label}</span>
         <span className="block truncate font-mono text-[11px] text-ink-mid">
-          {[entry.ref, entry.sublabel, entry.method].filter(Boolean).join(" · ")}
+          {[entry.ref, entry.sublabel, paymentMethodLabel(entry.method)].filter(Boolean).join(" · ")}
         </span>
       </span>
       <span

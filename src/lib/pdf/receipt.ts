@@ -1,6 +1,7 @@
 import "server-only";
 import { formatPaiseBare } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
+import { paymentMethodLabel } from "@/lib/invoices/display";
 
 /**
  * Payment receipt PDF — the CRM's replacement for the paper receipt book.
@@ -25,7 +26,7 @@ const COMPANY = {
     "Pookode, Nasim complex, Kuthuparamba Road",
     "Kannur - 670643, Kerala, India",
   ],
-  contact: "+91 95673 24364  ·  0490 208 3303  ·  GSTIN: <pending>",
+  contact: "+91 95673 24364  ·  0490 208 3303",
 };
 
 const NAVY = "#0f365d";
@@ -82,7 +83,7 @@ export async function renderReceiptPdf(r: ReceiptForPdf): Promise<Buffer> {
   doc.line(M, y - 14, W - M, y - 14);
   y += 6;
   row("Against invoice", r.invoiceNumber);
-  row("Payment method", r.method);
+  row("Payment method", paymentMethodLabel(r.method));
   if (r.reference) row("Reference", r.reference);
   row("Balance after this payment", `Rs. ${formatPaiseBare(r.balanceAfterPaise)}`);
 

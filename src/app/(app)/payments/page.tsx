@@ -7,6 +7,7 @@ import { formatPaise, formatPaiseCompact } from "@/lib/money";
 import { formatDate, todayKolkata } from "@/lib/dates";
 import { Banknote, ChevronRight } from "@/components/icons";
 import { requirePermission } from "@/lib/auth/session";
+import { paymentMethodLabel } from "@/lib/invoices/display";
 
 export const metadata: Metadata = { title: "Payments · Kalari" };
 
@@ -66,7 +67,7 @@ export default async function PaymentsPage() {
                       {inv?.customers?.name ?? "—"}
                     </span>
                     <span className="block font-mono text-[11px] text-ink-mid">
-                      {inv?.number ?? "—"} · {p.method}
+                      {inv?.number ?? "—"} · {paymentMethodLabel(p.method)}
                       {p.reference && ` · ${p.reference}`}
                       {p.number && <> · {p.number}</>}
                     </span>

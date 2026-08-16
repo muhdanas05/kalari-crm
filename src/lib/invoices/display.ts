@@ -58,3 +58,22 @@ export function statusLabel(status: string | null): string {
       return status ?? "—";
   }
 }
+
+/**
+ * How a payment method reads on screen and on paper.
+ *
+ * "UPI" is an initialism — capitalising the first letter of the enum value
+ * (the old inline `m[0].toUpperCase() + m.slice(1)`) renders it "Upi", which
+ * looks like a typo on an invoice.
+ */
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  transfer: "Bank transfer",
+  cheque: "Cheque",
+};
+
+export function paymentMethodLabel(method: string | null | undefined): string {
+  if (!method) return "—";
+  return PAYMENT_METHOD_LABELS[method] ?? method;
+}

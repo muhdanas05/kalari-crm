@@ -1,6 +1,7 @@
 import "server-only";
 import { formatPaiseBare } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
+import { BANK_LINES } from "./bank";
 
 /**
  * Invoice PDF — generated in Node, at issue time.
@@ -44,16 +45,14 @@ export type InvoiceForPdf = {
   lines: InvoiceLineForPdf[];
 };
 
-// Address and phones from kalaritravels.in. BLOCKED: GSTIN (and the exact
-// registered legal name, if it differs) needed from Kalari before the first
-// real invoice.
+// Address and phones from kalaritravels.in.
 const COMPANY = {
   name: "Kalari Tours and Travels",
   addressLines: [
     "Pookode, Nasim complex, Kuthuparamba Road",
     "Kannur - 670643, Kerala, India",
   ],
-  contact: "+91 95673 24364  ·  0490 208 3303  ·  GSTIN: <pending>",
+  contact: "+91 95673 24364  ·  0490 208 3303",
 };
 
 const NAVY = "#0f365d";
@@ -174,10 +173,39 @@ export async function renderInvoicePdf(inv: InvoiceForPdf): Promise<Buffer> {
     // Free text (defaults to the formatted total, e.g. "₹500.00") — core
     // Helvetica has no ₹ glyph, same reason totalRow() uses "Rs." above.
     doc.text(inv.amount_note.replace(/₹/g, "Rs. "), M, ty + 10, { maxWidth: W - 2 * M });
+    ty += 12;
+  }
+
+  // ── Bank details ─────────────────────────────────────────────────────────
+  // Where to actually pay. Without this the customer has an amount and no
+  // way to settle it without ringing the office.
+  const BANK_BLOCK_H = 15 + BANK_LINES.length * 12;
+  const pageH = doc.internal.pageSize.getHeight();
+  let by = ty + 26;
+
+  // A long invoice can push the totals far enough down that this block would
+  // run into the footer rule. Start a fresh page rather than overprint it.
+  if (by + BANK_BLOCK_H > pageH - 64) {
+    doc.addPage();
+    by = 60;
+  }
+
+  doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(NAVY);
+  doc.text("BANK DETAILS  ·  NEFT / RTGS / IMPS / UPI", M, by);
+  doc.setDrawColor(GOLD).setLineWidth(0.75);
+  doc.line(M, by + 3, M + 200, by + 3);
+
+  by += 15;
+  for (const [label, value] of BANK_LINES) {
+    doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(MID);
+    doc.text(`${label}`, M, by);
+    doc.setFont("helvetica", "bold").setTextColor(INK);
+    doc.text(value, M + 62, by, { maxWidth: W - 2 * M - 62 });
+    by += 12;
   }
 
   // ── Footer ───────────────────────────────────────────────────────────────
-  const fy = doc.internal.pageSize.getHeight() - 40;
+  const fy = pageH - 40;
   doc.setDrawColor("#e5e3dc").setLineWidth(0.5);
   doc.line(M, fy - 12, W - M, fy - 12);
   doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(MID);

@@ -8,6 +8,7 @@ import { getProfile, hasPermission, requirePermission } from "@/lib/auth/session
 import { formatPaise, formatPaiseBare, isRateEdited } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import { Lock, UserSquare2, FileText, Pencil } from "@/components/icons";
+import { paymentMethodLabel } from "@/lib/invoices/display";
 import { RecordPaymentButton } from "./RecordPaymentButton";
 import { EmailInvoiceButton } from "./EmailInvoiceButton";
 import { VoidButton } from "./VoidButton";
@@ -285,7 +286,7 @@ export default async function InvoicePage({
                         {formatPaise(p.amount_paise)}
                       </span>
                       <span className="block text-[10.5px] text-ink-faint">
-                        {formatDate(p.paid_on)} · {p.method}
+                        {formatDate(p.paid_on)} · {paymentMethodLabel(p.method)}
                         {p.reference && ` · ${p.reference}`}
                         {p.number && (
                           <>

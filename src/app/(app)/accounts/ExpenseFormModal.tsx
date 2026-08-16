@@ -9,6 +9,7 @@ import { Plus, Pencil } from "@/components/icons";
 import { parseInrToPaise } from "@/lib/money";
 import { saveExpense, type ExpenseInput } from "./actions";
 import type { PaymentMethod } from "@/lib/db/accounts";
+import { paymentMethodLabel } from "@/lib/invoices/display";
 
 /** Suggestions only — category is free text, the owner's book is his own. */
 const CATEGORIES = [
@@ -21,7 +22,7 @@ const CATEGORIES = [
   "Misc",
 ];
 
-const METHODS: PaymentMethod[] = ["cash", "transfer", "cheque"];
+const METHODS: PaymentMethod[] = ["cash", "upi", "transfer", "cheque"];
 
 type Form = Omit<ExpenseInput, "amountPaise"> & { amount: string };
 
@@ -195,7 +196,7 @@ export function ExpenseFormModal({
               ariaLabel="Payment method"
               options={METHODS.map((m) => ({
                 value: m,
-                label: m[0].toUpperCase() + m.slice(1),
+                label: paymentMethodLabel(m),
               }))}
             />
           </Field>
