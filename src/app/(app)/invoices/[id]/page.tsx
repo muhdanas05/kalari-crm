@@ -49,8 +49,8 @@ export default async function InvoicePage({
               <FileText size={14} />
               PDF
             </a>
-            {invoice.customer_id && customer?.email && (
-              <EmailInvoiceButton invoiceId={invoice.id!} email={customer.email} />
+            {invoice.customer_id && (
+              <EmailInvoiceButton invoiceId={invoice.id!} />
             )}
             {!voided && outstanding > 0 && (
               <RecordPaymentButton

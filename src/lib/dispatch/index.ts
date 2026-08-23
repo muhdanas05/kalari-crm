@@ -608,3 +608,50 @@ async function loadSettings(
   const { data } = await supabase.from("automation_settings").select("key, enabled");
   return Object.fromEntries((data ?? []).map((s) => [s.key, s.enabled]));
 }
+
+/**
+ * Dispatch ONE event, by id, immediately.
+ *
+ * dispatchEvents() claims the oldest N unprocessed events, which is right for
+ * the cron worker and wrong for a button: with any backlog the event the user
+ * just created sits behind unrelated work, so the click reports nothing while
+ * flushing other people's mail. This processes exactly the one event and
+ * nothing else.
+ */
+export async function dispatchEventById(eventId: string): Promise<OneResult> {
+  const supabase = createAdminClient();
+  const settings = await loadSettings(supabase);
+  const cfg = {
+    emailOn: settings["email.enabled"] ?? false,
+    sandbox: settings["email.sandbox"] ?? true,
+  };
+
+  const { data: event, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Could not read event: ${error.message}`);
+  if (!event) throw new Error("Event not found.");
+
+  try {
+    const result = await dispatchOne(supabase, event, cfg);
+    await supabase
+      .from("events")
+      .update({
+        processed_at: new Date().toISOString(),
+        processed_result: result as unknown as Database["public"]["Tables"]["events"]["Row"]["processed_result"],
+        attempts: (event.attempts ?? 0) + 1,
+      })
+      .eq("id", event.id);
+    return result;
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    await supabase
+      .from("events")
+      .update({ attempts: (event.attempts ?? 0) + 1, processed_result: { error: message } })
+      .eq("id", event.id);
+    throw e;
+  }
+}

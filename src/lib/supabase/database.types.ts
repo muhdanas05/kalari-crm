@@ -2430,6 +2430,7 @@ export type Database = {
         Returns: boolean
       }
       portal_read: { Args: { p_token: string }; Returns: Json }
+      queue_invoice_email: { Args: { p_invoice_id: string }; Returns: string }
       read_customer_passport: {
         Args: { p_customer_id: string; p_purpose: string }
         Returns: {

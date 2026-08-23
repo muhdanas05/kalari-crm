@@ -29,7 +29,16 @@ function backoffMinutes(attempt: number): number {
  * timeout mid-batch is a no-op the next tick absorbs, since every row is claimed
  * before it is sent.
  */
-export async function sendQueuedEmails(limit = 25): Promise<SendSummary> {
+export async function sendQueuedEmails(
+  limit = 25,
+  /**
+   * Send only the row belonging to this event, instead of the oldest `limit`
+   * in the queue. The invoice screen's Email button needs this: with any
+   * backlog, the default oldest-first claim sends other people's mail and
+   * leaves the one the user actually asked for still sitting there.
+   */
+  onlyEventId?: string,
+): Promise<SendSummary> {
   const supabase = createAdminClient();
   const out: SendSummary = {
     claimed: 0,
@@ -50,14 +59,24 @@ export async function sendQueuedEmails(limit = 25): Promise<SendSummary> {
     return out;
   }
 
-  const { data: rows } = await supabase
+  let claim = supabase
     .from("email_queue")
     .select("*")
     .in("status", ["queued", "failed"])
-    .lte("next_attempt_at", new Date().toISOString())
-    .lt("attempts", MAX_ATTEMPTS)
-    .order("next_attempt_at")
-    .limit(limit);
+    .lt("attempts", MAX_ATTEMPTS);
+
+  if (onlyEventId) {
+    // A user is waiting on this one. Skip the backoff window too — the whole
+    // point is "send it now", and a manual resend is a deliberate act.
+    claim = claim.eq("event_id", onlyEventId);
+  } else {
+    claim = claim
+      .lte("next_attempt_at", new Date().toISOString())
+      .order("next_attempt_at")
+      .limit(limit);
+  }
+
+  const { data: rows } = await claim;
 
   out.claimed = rows?.length ?? 0;
   if (!rows?.length) return out;

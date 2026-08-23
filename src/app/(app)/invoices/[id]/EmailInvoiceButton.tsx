@@ -6,13 +6,12 @@ import { useToast } from "@/components/ui/Toast";
 import { Mail, Check } from "@/components/icons";
 import { emailInvoice } from "./email-actions";
 
-export function EmailInvoiceButton({
-  invoiceId,
-  email,
-}: {
-  invoiceId: string;
-  email: string;
-}) {
+/**
+ * Always rendered, even when the customer has no address on file — the action
+ * is what explains why it can't send. Hiding the button instead just left the
+ * user wondering where it went.
+ */
+export function EmailInvoiceButton({ invoiceId }: { invoiceId: string }) {
   const toast = useToast();
   const [pending, start] = useTransition();
   const [done, setDone] = useState(false);
@@ -25,12 +24,13 @@ export function EmailInvoiceButton({
         return;
       }
       setDone(true);
-      // The honest message: it's queued, and if email is off it went to the log,
-      // not to the customer. Better than a cheerful "Sent!" that didn't happen.
+      // Says what actually happened. The action runs the dispatcher and sender
+      // inline now, so "Sent" means the provider accepted it — not that it is
+      // sitting in a queue waiting for the next cron tick.
       toast(
         res.sandboxed
-          ? "Queued — email is off, so it's in the log, not sent."
-          : `Queued for ${email}.`,
+          ? "Email is switched off, so this went to the log rather than to the customer."
+          : `Sent to ${res.to}.`,
         res.sandboxed ? "info" : "ok",
       );
     });
@@ -44,7 +44,7 @@ export function EmailInvoiceButton({
       onClick={send}
       disabled={pending}
     >
-      {pending ? "Queuing…" : done ? "Queued" : "Email"}
+      {pending ? "Sending…" : done ? "Sent" : "Email"}
     </Button>
   );
 }
