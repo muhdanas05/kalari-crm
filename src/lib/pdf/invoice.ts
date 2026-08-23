@@ -191,7 +191,7 @@ export async function renderInvoicePdf(inv: InvoiceForPdf): Promise<Buffer> {
   }
 
   doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(NAVY);
-  doc.text("BANK DETAILS  ·  NEFT / RTGS / IMPS / UPI", M, by);
+  doc.text("BANK DETAILS  ·  NEFT / RTGS / IMPS", M, by);
   doc.setDrawColor(GOLD).setLineWidth(0.75);
   doc.line(M, by + 3, M + 200, by + 3);
 

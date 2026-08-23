@@ -29,7 +29,7 @@ export function LoginForm({ next }: { next?: string }) {
             name="email"
             type="email"
             autoComplete="username"
-            placeholder="admin@demo.com"
+            placeholder="you@kalaritravels.in"
           />
           <Field
             label="Password"
